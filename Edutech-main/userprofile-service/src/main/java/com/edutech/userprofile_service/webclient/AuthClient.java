@@ -1,17 +1,22 @@
 package com.edutech.userprofile_service.webclient;
 
 import java.util.Map;
+
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import org.springframework.beans.factory.annotation.Value;
 
 @Component
 public class AuthClient {
 
     private final WebClient webClient;
 
-    public AuthClient(WebClient.Builder builder) {
-        this.webClient = builder
-            .baseUrl("http://localhost:8081/api/v1") // Cambia según el puerto real
+    // Constructor: construye WebClient con la base URL del AuthService
+    public AuthClient(@Value("${auth.service.url}") String authServiceUrl) {
+        this.webClient = WebClient.builder()
+            .baseUrl(authServiceUrl)
             .build();
     }
 
@@ -27,20 +32,20 @@ public class AuthClient {
         return webClient.get()
             .uri("/users/{id}", userId)
             .retrieve()
-            .bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {})
+            .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
             .block();
     }
 
     public boolean existeUsuario(Long userId) {
-    try {
-        this.webClient.get()
-            .uri("/users/{id}", userId)
-            .retrieve()
-            .bodyToMono(Map.class)
-            .block();
-        return true;
-    } catch (Exception e) {
-        return false;
+        try {
+            webClient.get()
+                .uri("/users/{id}", userId)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
-}
 }
