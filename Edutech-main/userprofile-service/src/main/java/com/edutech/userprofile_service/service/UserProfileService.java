@@ -1,7 +1,9 @@
 package com.edutech.userprofile_service.service;
 
+import com.edutech.userprofile_service.model.Genero;
 import com.edutech.userprofile_service.model.UserProfile;
 import com.edutech.userprofile_service.repository.UserProfileRepository;
+import com.edutech.userprofile_service.webclient.AuthClient;
 
 import jakarta.transaction.Transactional;
 
@@ -17,26 +19,27 @@ public class UserProfileService {
     @Autowired
     private UserProfileRepository userProfileRepository; 
 
+    @Autowired
+    private AuthClient authClient;
+
     // Crear perfil
-    public UserProfile crearUserProfile(String name, String email, String telefono) {
-        if (name == null || email == null || telefono == null) {
-            throw new RuntimeException("Nombre, email y telefono son obligatorios");
+    public UserProfile crearPerfil(UserProfile perfil) {
+        if (perfil.getUserId() == null) {
+            throw new RuntimeException("El ID del usuario (userId) es obligatorio");
+        }
+        if (userProfileRepository.findByUserId(perfil.getUserId()).isPresent()) {
+            throw new RuntimeException("El usuario ya tiene un perfil asociado");
         }
 
-        if(userProfileRepository.existsByEmail(email)) {
-            throw new RuntimeException("El email ya se encuentra registrado");
+        if (perfil.getTelefono() == null || perfil.getTelefono().isBlank()) {
+            throw new RuntimeException("El teléfono es obligatorio");
         }
 
-        if (userProfileRepository.exitsByTelefono(telefono)) {
-            throw new RuntimeException("El telefono ya se encuentra registrado");
+        if (userProfileRepository.existsByTelefono(perfil.getTelefono())) {
+            throw new RuntimeException("El teléfono ya se encuentra registrado");
         }
 
-        UserProfile userprofile = new UserProfile();
-        userprofile.setName(name);
-        userprofile.setEmail(email);
-        userprofile.setTelefono(telefono);
-
-        return userProfileRepository.save(userprofile);
+        return userProfileRepository.save(perfil);
     }
 
     // Obtener todos los perfiles
@@ -50,31 +53,88 @@ public class UserProfileService {
         .orElseThrow(()-> new RuntimeException("Perfil de usuario no encontrado Id: "+ id));
     }
 
-    // Actualizar perfil
-    public UserProfile actualizarUserProfile(Long id, String name, String email, String telefono) {
-        UserProfile userProfile = userProfileRepository.findById(id)
-        .orElseThrow(()-> new RuntimeException("Perfil de usuario no encontrado"));
+    // Obtener perfil por userId (desde AuthService)
+    public UserProfile obtenerUserProfilePorUserId(Long userId){
+        return userProfileRepository.findByUserId(userId)
+        .orElseThrow(()-> new RuntimeException("Perfil no encontrado para el usuario Id: "+ userId));
+    }
 
-        if (name != null && !name.trim().isEmpty()) {
-            userProfile.setName(name);; 
+    // Actualizar perfil
+    public UserProfile actualizarUserProfile(Long id, UserProfile nuevosDatos) {
+        UserProfile userProfile = userProfileRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Perfil de usuario no encontrado"));
+
+        if (nuevosDatos.getNombre() != null) {
+            userProfile.setNombre(nuevosDatos.getNombre());
         }
 
-        if (email != null && !email.trim().isEmpty()) {
-           userProfile.setEmail(email);
+        if (nuevosDatos.getApellido() != null) {
+            userProfile.setApellido(nuevosDatos.getApellido());
+        }
+
+        if (nuevosDatos.getTelefono() != null && !nuevosDatos.getTelefono().equals(userProfile.getTelefono())) {
+            if (userProfileRepository.existsByTelefono(nuevosDatos.getTelefono())) {
+                throw new RuntimeException("El teléfono ya está en uso por otro perfil");
+            }
+            userProfile.setTelefono(nuevosDatos.getTelefono());
+        }
+
+        if (nuevosDatos.getFotoPerfil() != null) {
+            userProfile.setFotoPerfil(nuevosDatos.getFotoPerfil());
+        }
+
+        if (nuevosDatos.getBiografia() != null) {
+            userProfile.setBiografia(nuevosDatos.getBiografia());
+        }
+
+        if (nuevosDatos.getGenero() != null) {
+            userProfile.setGenero(nuevosDatos.getGenero());
+        }
+
+        if (nuevosDatos.getFechaNacimiento() != null) {
+            userProfile.setFechaNacimiento(nuevosDatos.getFechaNacimiento());
+        }
+
+        if (nuevosDatos.getDireccion() != null) {
+            userProfile.setDireccion(nuevosDatos.getDireccion());
+        }
+        
+        if (nuevosDatos.getNotificaciones() != null) {
+            userProfile.setNotificaciones(nuevosDatos.getNotificaciones());
         }
 
         return userProfileRepository.save(userProfile);
     }
 
     // Eliminar perfil
-    public String eliminarUserProfile(Long id){
+    public String eliminarUserProfile(Long id) {
         UserProfile userProfile = userProfileRepository.findById(id)
-        .orElseThrow(()-> new RuntimeException("Perfil de usuario no encontrado "+ id));
-       
-        //if (id == 1 || id == 2 || id == 3) {
-          //  throw new RuntimeException("No se puede eliminar este usuario base del sistema");    
-        //}
+            .orElseThrow(() -> new RuntimeException("Perfil de usuario no encontrado. ID: " + id));
+
+        Long userId = userProfile.getUserId();
         userProfileRepository.delete(userProfile);
-        return "Perfil de usuario eliminado";
+
+        try {
+            authClient.eliminarUsuario(userId); // Llama a AuthService para eliminar también al usuario
+        } catch (Exception e) {
+            throw new RuntimeException("Error al eliminar el usuario en AuthService: " + e.getMessage());
+        }
+
+        return "Perfil y usuario eliminados correctamente";
+    }
+
+    // Buscar perfiles por nombre (ignora mayúsculas y minúsculas)
+    public List<UserProfile> buscarPorNombre(String nombre) {
+        return userProfileRepository.findByNombreContainingIgnoreCase(nombre);
+    }
+
+    // Buscar perfiles por apellido
+    public List<UserProfile> buscarPorApellido(String apellido) {
+        return userProfileRepository.findByApellidoContainingIgnoreCase(apellido);
+    }
+
+    // Buscar perfiles por género
+    public List<UserProfile> buscarPorGenero(Genero genero) {
+        return userProfileRepository.findByGenero(genero);
     }
 }
