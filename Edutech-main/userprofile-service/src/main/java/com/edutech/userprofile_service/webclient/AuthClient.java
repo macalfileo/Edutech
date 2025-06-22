@@ -30,4 +30,17 @@ public class AuthClient {
             .bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {})
             .block();
     }
+
+    public boolean existeUsuario(Long userId) {
+    try {
+        this.webClient.get()
+            .uri("/users/{id}", userId)
+            .retrieve()
+            .bodyToMono(Map.class)
+            .block();
+        return true;
+    } catch (Exception e) {
+        return false;
+    }
+}
 }

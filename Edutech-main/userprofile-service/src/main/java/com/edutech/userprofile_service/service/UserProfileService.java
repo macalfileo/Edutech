@@ -27,6 +27,11 @@ public class UserProfileService {
         if (perfil.getUserId() == null) {
             throw new RuntimeException("El ID del usuario (userId) es obligatorio");
         }
+
+        if (!authClient.existeUsuario(perfil.getUserId())) {
+            throw new RuntimeException("El usuario con ID " + perfil.getUserId() + " no existe en el AuthService");
+        }
+        
         if (userProfileRepository.findByUserId(perfil.getUserId()).isPresent()) {
             throw new RuntimeException("El usuario ya tiene un perfil asociado");
         }
@@ -98,7 +103,7 @@ public class UserProfileService {
         if (nuevosDatos.getDireccion() != null) {
             userProfile.setDireccion(nuevosDatos.getDireccion());
         }
-        
+
         if (nuevosDatos.getNotificaciones() != null) {
             userProfile.setNotificaciones(nuevosDatos.getNotificaciones());
         }
