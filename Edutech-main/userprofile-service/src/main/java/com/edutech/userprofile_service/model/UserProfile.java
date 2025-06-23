@@ -54,9 +54,12 @@ public class UserProfile {
     private Genero genero;
 
     @Past(message = "La fecha de nacimiento debe ser una fecha pasada") // Validación para que la fecha de nacimiento sea en el pasado
+    @NotNull(message = "La fecha de nacimiento no puede estar vacía")
     private LocalDate fechaNacimiento; // Fecha de nacimiento del usuario, debe ser una fecha pasada
 
+    @Column(nullable = false, length = 50) // Longitud máxima de la dirección
     @Size(max = 50, message = "La dirección no puede exceder los 50 caracteres")
+    @NotBlank(message = "La dirección no puede estar vacía") // Validación para que la dirección no esté vacía
     private String direccion; // Dirección del usuario, opcional
 
     @NotNull(message = "La preferencia de notificaciones no puede estar vacía")
