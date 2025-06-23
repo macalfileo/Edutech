@@ -11,7 +11,7 @@ public class Publicacion {
 
 
     @Id 
-    @GeneratedValue( strategy = Generation.Type.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotBlack(message = "el nombre del autor no puede estar vacio")
