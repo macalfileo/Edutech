@@ -5,16 +5,12 @@ import com.edutech.community_service.service.PublicacionService;
 
 import jakarta.validation.Valid; 
 
-import com.edutech.community_service.repository.PublicacionRepository;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/publicaciones")
@@ -37,9 +33,12 @@ public class PublicacionController {
 
     // Eliminar publicación por ID
     @DeleteMapping("/{id}")
-    public ResponseEntity<void> eliminar(@PathVariable Long id) {
-        return service.eliminar(id)
-            ResponseEntity.ok().build();
-            ResponseEntity.notFound().build();
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        boolean eliminado = service.eliminar(id);
+        if (eliminado) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.notFound().build();
         }
     }
+}
