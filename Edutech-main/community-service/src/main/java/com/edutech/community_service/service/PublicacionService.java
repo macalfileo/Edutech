@@ -1,25 +1,25 @@
 package com.edutech.community_service.service;
 
 import com.edutech.community_service.model.Publicacion;
-import com.edutech.community_service.repository.publicacionRepository; 
+import com.edutech.community_service.repository.PublicacionRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.service;
+import org.springframework.stereotype.Service;
 
-import java.util.list;
+import java.util.List;
 import java.util.Optional;
 
-@service 
+@Service 
 public class PublicacionService {
 
     @Autowired
-    private PublicionRepository repository;
+    private PublicacionRepository repository;
 
     public Publicacion crear(Publicacion publicacion) {
         return repository.save(publicacion);
     }
 
-    public List<publicacion> listarTodas(){
+    public List<Publicacion> listarTodas(){
         return repository.findAll();
     }
 

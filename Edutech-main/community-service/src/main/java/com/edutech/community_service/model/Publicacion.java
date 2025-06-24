@@ -1,5 +1,7 @@
 package com.edutech.community_service.model;
 
+import java.time.LocalDate;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 
@@ -14,8 +16,8 @@ public class Publicacion {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlack(message = "el nombre del autor no puede estar vacio")
-    @Size(mas = 50, message = "el nombre del autor no puede exceder 50 caracteres")
+    @NotBlank(message = "el nombre del autor no puede estar vacio")
+    @Size(max = 50, message = "el nombre del autor no puede exceder 50 caracteres")
     private String autor;
 
     @NotBlank(message = "El mensaje no puede estar vacío")
