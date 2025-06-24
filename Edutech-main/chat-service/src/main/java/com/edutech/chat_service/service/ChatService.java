@@ -6,7 +6,6 @@ import com.edutech.chat_service.repository.MensajeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -20,7 +19,7 @@ public class ChatService {
         mensaje.setRemitenteId(dto.getRemitenteId());
         mensaje.setDestinatarioId(dto.getDestinatarioId());
         mensaje.setContenido(dto.getContenido());
-        mensaje.setTimestamp(LocalDateTime.now());
+        mensaje.setCreadoEn(null);;
         return repo.save(mensaje);
     }
 
