@@ -3,42 +3,57 @@ package com.edutech.community_service.controller;
 import com.edutech.community_service.model.Publicacion;
 import com.edutech.community_service.service.PublicacionService;
 
-import jakarta.validation.Valid; 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/publicaciones")
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-public class PublicacionController {
+@WebMvcTest(PublicacionController.class)
+@ExtendWith(SpringExtension.class)
+@WithMockUser
+class PublicacionControllerTest {
 
     @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
     private PublicacionService service;
 
-    @PostMapping
-    public ResponseEntity<Publicacion> crear(@Valid @RequestBody Publicacion publicacion) {
-        publicacion.setFechaPublicacion( LocalDate.now()); 
-        return ResponseEntity.ok(service.crear(publicacion));
-    }
+    @Autowired
+    private ObjectMapper objectMapper;
 
-    @GetMapping
-    public List<Publicacion> listar() {
-        return service.listarTodas();
-    }
+    @Test
+    void crearPublicacion_deberiaRetornar200() throws Exception {
+        Publicacion pub = new Publicacion();
+        pub.setId(1L);
+        pub.setAutor("Angelo");
+        pub.setMensaje("Prueba de creación");
+        pub.setFechaPublicacion(LocalDate.now());
+        pub.setCantidadLikes(0L);
 
-    // Eliminar publicación por ID
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        boolean eliminado = service.eliminar(id);
-        if (eliminado) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        when(service.crear(any(Publicacion.class))).thenReturn(pub);
+
+        mockMvc.perform(post("/api/publicaciones")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(pub)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.autor").value("Angelo"))
+                .andExpect(jsonPath("$.mensaje").value("Prueba de creación"));
     }
 }
