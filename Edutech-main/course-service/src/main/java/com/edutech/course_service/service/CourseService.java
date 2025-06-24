@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.edutech.course_service.model.Course;
 import com.edutech.course_service.repository.CourseRepository;
+import com.edutech.course_service.webclient.AuthClient;
 
 @Service
 @Transactional
@@ -17,6 +18,9 @@ import com.edutech.course_service.repository.CourseRepository;
 public class CourseService {
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private AuthClient authClient;
 
     public List<Course> obtenerCourses() {
         return courseRepository.findAll();
@@ -30,6 +34,9 @@ public class CourseService {
     public Course crearCourse(String titulo, String descripcion, Long instructorId, int duracionMinutos, String categoria) {
         if (titulo == null || descripcion == null || instructorId == null || duracionMinutos < 45 || categoria == null) {
             throw new RuntimeException("Todos los campos son obligatorios y la duración debe ser al menos 45 minutos");
+        }
+        if (!authClient.existeInstructor(instructorId)) {
+            throw new RuntimeException("El instructor con ID " + instructorId + " no existe");
         }
         
         Course curso = new Course();

@@ -22,6 +22,11 @@ import com.edutech.course_service.service.ContenidoService;
 import com.edutech.course_service.service.CourseService;
 import com.edutech.course_service.service.ModuloService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
 @RestController
 @RequestMapping("/api/v1/courses") // Define la ruta base
 public class CourseController {
@@ -35,6 +40,8 @@ public class CourseController {
     private ContenidoService contenidoService;
 
     // Obtener todos los cursos
+    @Operation(summary = "Obtener todos los cursos", description = "Devuelve todos los cursos registrados.")
+    @ApiResponse(responseCode = "200", description = "Lista de cursos obtenida correctamente", content = @Content(schema = @Schema(implementation = Course.class)))
     @GetMapping("/cursos")
     public ResponseEntity<List<Course>> getCourse() {
         List<Course> cursos = courseService.obtenerCourses();
@@ -45,6 +52,8 @@ public class CourseController {
     }
 
     // Obtener todos los módulos
+    @Operation(summary = "Obtener todos los módulos", description = "Devuelve todos los módulos registrados.")
+    @ApiResponse(responseCode = "200", description = "Lista de módulos obtenida correctamente", content = @Content(schema = @Schema(implementation = Modulo.class)))
     @GetMapping("/modulos")
     public ResponseEntity<List<Modulo>> getModulo() {
         List<Modulo> modulos = moduloService.obtenerModulos();
@@ -55,6 +64,8 @@ public class CourseController {
     }
 
     // Obtener todos los contenidos
+    @Operation(summary = "Obtener todos los contenidos", description = "Devuelve todos los contenidos registrados.")
+    @ApiResponse(responseCode = "200", description = "Lista de contenidos obtenida correctamente", content = @Content(schema = @Schema(implementation = Contenido.class)))
     @GetMapping("/contenidos")
     public ResponseEntity<List<Contenido>> getContenido() {
         List<Contenido> contenidos = contenidoService.obtenerContenidos();
@@ -65,6 +76,9 @@ public class CourseController {
     }
 
     // Obtener curso por ID
+    @Operation(summary = "Obtener curso por ID", description = "Devuelve un curso si el ID existe.")
+    @ApiResponse(responseCode = "200", description = "Curso encontrado", content = @Content(schema = @Schema(implementation = Course.class)))
+    @ApiResponse(responseCode = "404", description = "Curso no encontrado", content = @Content)
     @GetMapping("/cursos/{id}")
     public ResponseEntity<?> obtenerCoursePorId(@PathVariable Long id) {
         try {
@@ -76,6 +90,9 @@ public class CourseController {
     }
 
     // Obtener módulo por ID
+    @Operation(summary = "Obtener módulo por ID", description = "Devuelve un módulo si el ID existe.")
+    @ApiResponse(responseCode = "200", description = "Módulo encontrado", content = @Content(schema = @Schema(implementation = Modulo.class)))
+    @ApiResponse(responseCode = "404", description = "Módulo no encontrado", content = @Content)
     @GetMapping("/modulos/{id}")
     public ResponseEntity<?> obtenerModuloPorId(@PathVariable Long id) {
         try {
@@ -87,6 +104,9 @@ public class CourseController {
     }
 
     // Obtener contenido por ID
+    @Operation(summary = "Obtener contenido por ID", description = "Devuelve un contenido si el ID existe.")
+    @ApiResponse(responseCode = "200", description = "Contenido encontrado", content = @Content(schema = @Schema(implementation = Contenido.class)))
+    @ApiResponse(responseCode = "404", description = "Contenido no encontrado", content = @Content)
     @GetMapping("/contenidos/{id}")
     public ResponseEntity<?> obtenerContenidoPorId(@PathVariable Long id) {
         try {
@@ -98,6 +118,8 @@ public class CourseController {
     }
 
     // Obtener módulos por curso
+    @Operation(summary = "Obtener módulos de un curso", description = "Devuelve todos los módulos de un curso específico.")
+    @ApiResponse(responseCode = "200", description = "Lista de módulos obtenida correctamente", content = @Content(schema = @Schema(implementation = Modulo.class)))
     @GetMapping("/cursos/{cursoId}/modulos")
     public ResponseEntity<?> obtenerModulosPorCurso(@PathVariable Long cursoId) {
         try {
@@ -109,6 +131,8 @@ public class CourseController {
     }
 
     // Obtener contenidos por módulo
+    @Operation(summary = "Obtener contenidos de un módulo", description = "Devuelve todos los contenidos de un módulo específico.")
+    @ApiResponse(responseCode = "200", description = "Lista de contenidos obtenida correctamente", content = @Content(schema = @Schema(implementation = Contenido.class)))
     @GetMapping("/modulos/{moduloId}/contenidos")
     public ResponseEntity<?> obtenerContenidosPorCurso(@PathVariable Long moduloId) {
         try {
@@ -120,6 +144,9 @@ public class CourseController {
     }
 
     // Crear nuevo curso
+    @Operation(summary = "Crear un nuevo curso", description = "Registra un nuevo curso con su información.")
+    @ApiResponse(responseCode = "201", description = "Curso creado exitosamente", content = @Content(schema = @Schema(implementation = Course.class)))
+    @ApiResponse(responseCode = "404", description = "Error en los datos enviados", content = @Content)
     @PostMapping("/cursos")
     public ResponseEntity<?> crearCourse(@RequestBody Course curso){
         try {
@@ -131,6 +158,9 @@ public class CourseController {
     }
 
     // Crear nuevo módulo
+    @Operation(summary = "Crear un nuevo módulo", description = "Registra un nuevo módulo asociado a un curso.")
+    @ApiResponse(responseCode = "201", description = "Módulo creado exitosamente", content = @Content(schema = @Schema(implementation = Modulo.class)))
+    @ApiResponse(responseCode = "404", description = "Error en los datos enviados", content = @Content)
     @PostMapping("/modulos")
     public ResponseEntity<?> crearModulo(@RequestBody Modulo modulo, @RequestParam Long cursoId){
         try {
@@ -142,6 +172,9 @@ public class CourseController {
     }
 
     // Crear contenido nuevo
+    @Operation(summary = "Crear un nuevo contenido", description = "Registra un nuevo contenido dentro de un módulo.")
+    @ApiResponse(responseCode = "201", description = "Contenido creado exitosamente", content = @Content(schema = @Schema(implementation = Contenido.class)))
+    @ApiResponse(responseCode = "404", description = "Error en los datos enviados", content = @Content)
     @PostMapping("/contenidos")
     public ResponseEntity<?> crearContenido(@RequestBody Contenido contenidos){
         try {
@@ -153,6 +186,9 @@ public class CourseController {
     }
 
     // Actualizar curso
+    @Operation(summary = "Actualizar curso", description = "Actualiza los datos de un curso dado su ID.")
+    @ApiResponse(responseCode = "200", description = "Curso actualizado exitosamente", content = @Content(schema = @Schema(implementation = Course.class)))
+    @ApiResponse(responseCode = "404", description = "Curso no encontrado", content = @Content)
     @PutMapping("/cursos/{id}")
     public ResponseEntity<?> actualizarCourse(@PathVariable Long id, @RequestBody Course curso) {
         try {
@@ -164,6 +200,9 @@ public class CourseController {
     }
 
     // Actualizar módulo
+    @Operation(summary = "Actualizar módulo", description = "Actualiza los datos de un módulo dado su ID.")
+    @ApiResponse(responseCode = "200", description = "Módulo actualizado exitosamente", content = @Content(schema = @Schema(implementation = Modulo.class)))
+    @ApiResponse(responseCode = "404", description = "Módulo no encontrado", content = @Content)
     @PutMapping("/modulos/{id}")
     public ResponseEntity<?> actualizarModulo(@PathVariable Long id, @RequestBody Modulo modulo) {
         try {
@@ -174,6 +213,10 @@ public class CourseController {
         }
     }
 
+    // Actualizar contenido
+    @Operation(summary = "Actualizar contenido", description = "Actualiza los datos de un contenido dado su ID.")
+    @ApiResponse(responseCode = "200", description = "Contenido actualizado exitosamente", content = @Content(schema = @Schema(implementation = Contenido.class)))
+    @ApiResponse(responseCode = "404", description = "Contenido no encontrado", content = @Content)
     @PutMapping("/contenidos/{id}")
     public ResponseEntity<?> actualizarContenido(@PathVariable Long id, @RequestBody Contenido contenidos) {
         try {
@@ -185,6 +228,9 @@ public class CourseController {
     }
 
     // Eliminar curso
+    @Operation(summary = "Eliminar un curso", description = "Elimina un curso según el ID proporcionado.")
+    @ApiResponse(responseCode = "200", description = "Curso eliminado correctamente", content = @Content)
+    @ApiResponse(responseCode = "404", description = "Curso no encontrado", content = @Content)
     @DeleteMapping("/cursos/{id}")
     public ResponseEntity<?> eliminarCourse(@PathVariable Long id) {
         try {
@@ -196,6 +242,9 @@ public class CourseController {
     }
 
     // Eliminar módulo
+    @Operation(summary = "Eliminar un módulo", description = "Elimina un módulo según el ID proporcionado.")
+    @ApiResponse(responseCode = "200", description = "Módulo eliminado correctamente", content = @Content)
+    @ApiResponse(responseCode = "404", description = "Módulo no encontrado", content = @Content)
     @DeleteMapping("/modulos/{id}")
     public ResponseEntity<?> eliminarModulo(@PathVariable Long id) {
         try {
@@ -207,6 +256,9 @@ public class CourseController {
     }
 
     // Eliminar contenido
+    @Operation(summary = "Eliminar un contenido", description = "Elimina un contenido según el ID proporcionado.")
+    @ApiResponse(responseCode = "200", description = "Contenido eliminado correctamente", content = @Content)
+    @ApiResponse(responseCode = "404", description = "Contenido no encontrado", content = @Content)
     @DeleteMapping("/contenidos/{id}")
     public ResponseEntity<?> eliminarContenido(@PathVariable Long id) {
         try {
