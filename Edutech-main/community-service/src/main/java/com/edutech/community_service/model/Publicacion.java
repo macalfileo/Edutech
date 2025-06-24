@@ -4,11 +4,15 @@ import java.time.LocalDate;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @Entity
+@Table(name = "publicaciones") // Puedes personalizar el nombre de la tabla
+@AllArgsConstructor
 public class Publicacion {
 
 
