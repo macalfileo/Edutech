@@ -1,8 +1,14 @@
 package com.edutech.report_service.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "DTO que representa un reporte")
 public class ReporteDTO {
 
+    @Schema(description = "Tipo de reporte, por ejemplo, 'PDF', 'EXCEL', etc.")
     private Object tipo;
+
+    @Schema(description = "Contenido del reporte que puede ser un texto, imagen o cualquier dato relevante")
     private Object contenido;
 
     public Object getTipo() {
