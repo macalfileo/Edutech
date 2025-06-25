@@ -26,6 +26,7 @@ public class NotificationController {
     private NotificationService notificationService;
 
 
+
     @PostMapping("/send")
     public ResponseEntity<Notification> enviarNotificacion(@RequestBody Notification notification) {
         Notification nueva = notificationService.enviarNotificacion(notification);
