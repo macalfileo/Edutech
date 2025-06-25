@@ -2,6 +2,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "EvaluationServiceApplication",
+            "request": "launch",
+            "mainClass": "com.edutech.evaluation_service.EvaluationServiceApplication",
+            "projectName": "evaluation-service"
+        },
+        {
+            "type": "java",
             "name": "Spring Boot-EnrollmentServiceApplication<enrollment-service>",
             "request": "launch",
             "cwd": "${workspaceFolder}",

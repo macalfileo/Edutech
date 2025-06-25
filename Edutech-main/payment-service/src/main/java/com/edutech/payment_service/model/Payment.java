@@ -18,7 +18,7 @@ import lombok.Data;
 @Entity
 @Table(name = "pagos")
 @Data
-public class Payment {
+public class Payment  {
      @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
