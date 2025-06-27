@@ -24,7 +24,7 @@ public class ChatService {
     }
 
     public List<Mensaje> obtenerConversacion(Long remitenteId, Long destinatarioId) {
-        return repo.findByRemitenteIdAndDestinatarioIdOrderByTimestampAsc(remitenteId, destinatarioId);
+        return repo.findByRemitenteIdAndDestinatarioIdOrderByCreadoEnAsc(remitenteId, destinatarioId);
     }
 
     public List<Mensaje> obtenerTodos() {
