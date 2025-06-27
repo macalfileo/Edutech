@@ -1,4 +1,4 @@
-package com.edutech.media_service.config;
+package com.edutech.userprofile_service.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +16,10 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
                     "/swagger-ui.html",
-                    "/api/archivos/subir"
+                    "/api/v1/usuario_perfil/perfiles",      
+                    "/api/v1/usuario_perfil/perfiles/user",
+                    "/api/v1/usuario_perfil/perfiles/nombre",
+                    "/api/v1/usuario_perfil//perfiles/genero"
                 ).permitAll() // Permite acceso a Swagger y documentación de la API
                 .anyRequest().authenticated() // Requiere autenticación para cualquier otra solicitud
             );
@@ -24,4 +27,3 @@ public class SecurityConfig {
     }
 
 }
-

@@ -1,4 +1,4 @@
-package com.edutech.media_service.config;
+package com.edutech.notification_service.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +16,7 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
                     "/swagger-ui.html",
-                    "/api/archivos/subir"
+                    "/api/notifications/send"
                 ).permitAll() // Permite acceso a Swagger y documentación de la API
                 .anyRequest().authenticated() // Requiere autenticación para cualquier otra solicitud
             );
@@ -24,4 +24,3 @@ public class SecurityConfig {
     }
 
 }
-
