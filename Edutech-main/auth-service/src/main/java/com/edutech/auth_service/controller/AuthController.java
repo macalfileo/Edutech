@@ -1,10 +1,18 @@
 package com.edutech.auth_service.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.edutech.auth_service.config.JwtUtil;
 import com.edutech.auth_service.model.Rol;
 import com.edutech.auth_service.model.User;
 import com.edutech.auth_service.service.RolService;
@@ -33,7 +42,14 @@ public class AuthController {
 
     @Autowired // Inyecta el Service para para usar sus métodos
     private RolService rolService;
+    @Autowired
+    private JwtUtil jwtUtil; // Inyecta el JwtUtil para manejar tokens JWT
 
+    @Autowired
+    private AuthenticationManager authenticationManager; // Inyecta el AuthenticationManager para manejar autenticación
+
+    @Autowired
+    private UserDetailsService userDetailsService; // Inyecta el UserDetailsService para cargar detalles del usuario
     // Endpoint para consultar los roles
     @Operation(summary = "Obtener una lista de todos los roles", description = "Retorna todos los roles registrados en el sistema.")
     @ApiResponse(
@@ -89,6 +105,7 @@ public class AuthController {
         description = "Lista de usuarios no encontrado",
         content = @Content(schema = @Schema(implementation = User.class))
     )
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @GetMapping("/users")
     public ResponseEntity<List<User>> getUsers(){
         List<User> users = userService.obtenerUser();
@@ -110,6 +127,7 @@ public class AuthController {
         description = "Usuario no encontrado",
         content = @Content(schema = @Schema(implementation = User.class))
     )
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @GetMapping("/users/{id}")
     public ResponseEntity<?> obtenerUserPorId(@PathVariable Long id) {
         try {
@@ -132,14 +150,27 @@ public class AuthController {
         description = "Error en los datos enviados",
         content = @Content(schema = @Schema(implementation = User.class))
     )
+    //@PreAuthorize("hasRole('ADMINISTRADOR')")
     @PostMapping("/users")
-    public ResponseEntity<?> crearUser(@RequestBody User user){
-        try {
+    public ResponseEntity<?> crearUser(@RequestBody User user) {
+        // Si no hay usuarios: crear libremente (primer uso del sistema)
+        if (userService.obtenerUser().isEmpty()) {
             User nuevo = userService.crearUser(user.getUsername(), user.getEmail(), user.getPassword(), user.getRol().getId());
             return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
+
+        // Si ya hay usuarios, verificar autenticación y rol
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+
+        // ⚠ Aquí está el cambio clave: validar que haya token válido y rol correcto
+        if (auth == null || !auth.isAuthenticated() || auth.getAuthorities() == null ||
+            auth.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR"))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No autorizado para crear usuarios");
+        }
+
+        // Crear usuario normalmente
+        User nuevo = userService.crearUser(user.getUsername(), user.getEmail(), user.getPassword(), user.getRol().getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
     }
 
     // Endpoint para crear un rol nuevo
@@ -166,7 +197,7 @@ public class AuthController {
     }
 
     // Endpoint para autenticar al usuario
-    @Operation(summary = "Autenticar un usuario", description = "Verifica si el nombre de usuario y la contraseña son válidos.")
+    @Operation(summary = "Autenticar un usuario", description = "Devuelve un JWT si las credenciales son válidas.")
     @ApiResponse(
         responseCode = "200",
         description = "Autenticación exitosa",
@@ -178,11 +209,22 @@ public class AuthController {
         content = @Content(schema = @Schema(implementation = User.class))
     )
     @PostMapping("/auth/login")
-    public ResponseEntity<?> autenticar(@RequestParam String username, @RequestParam String password) {
-        boolean autenticado = userService.autenticar(username, password);
-        if (autenticado) {
-            return ResponseEntity.ok("Autenticación exitosa");
-        } else {
+    public ResponseEntity<?> autenticar(@RequestBody Map<String, String> loginData) {
+        String username = loginData.get("username");
+        String password = loginData.get("password");
+
+        try {
+            authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, password)
+            );
+
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            String jwt = jwtUtil.generateToken(userDetails);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("token", jwt);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales incorrectas");
         }
     }
@@ -199,6 +241,7 @@ public class AuthController {
         description = "Usuario no encontrado",
         content = @Content(schema = @Schema(implementation = User.class))
     )
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PutMapping("/users/{id}")
     public ResponseEntity<?> actualizarUser(@PathVariable Long id, @RequestParam(required = false) String username,@RequestParam(required = false) String email, @RequestParam(required = false) String password, @RequestParam(required = false) Long rolId) {
         try {
@@ -265,6 +308,7 @@ public class AuthController {
         description = "Usuario no encontrado",
         content = @Content(schema = @Schema(implementation = User.class))
     )
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> eliminarUser(@PathVariable Long id) {
         try {

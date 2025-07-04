@@ -2,6 +2,69 @@
     "configurations": [
         {
             "type": "java",
+            "name": "UserprofileServiceApplication",
+            "request": "launch",
+            "mainClass": "com.edutech.userprofile_service.UserprofileServiceApplication",
+            "projectName": "user-profile-service"
+        },
+        {
+            "type": "java",
+            "name": "ReportServiceApplication",
+            "request": "launch",
+            "mainClass": "com.edutech.report_service.ReportServiceApplication",
+            "projectName": "report-service"
+        },
+        {
+            "type": "java",
+            "name": "PaymentServiceApplication",
+            "request": "launch",
+            "mainClass": "com.edutech.payment_service.PaymentServiceApplication",
+            "projectName": "payment-service"
+        },
+        {
+            "type": "java",
+            "name": "NotificationServiceApplication",
+            "request": "launch",
+            "mainClass": "com.edutech.notification_service.NotificationServiceApplication",
+            "projectName": "notification-service"
+        },
+        {
+            "type": "java",
+            "name": "MediaServiceApplication",
+            "request": "launch",
+            "mainClass": "com.edutech.media_service.MediaServiceApplication",
+            "projectName": "media-service"
+        },
+        {
+            "type": "java",
+            "name": "CourseServiceApplication",
+            "request": "launch",
+            "mainClass": "com.edutech.course_service.CourseServiceApplication",
+            "projectName": "course-service"
+        },
+        {
+            "type": "java",
+            "name": "CommunityServiceApplication",
+            "request": "launch",
+            "mainClass": "com.edutech.community_service.CommunityServiceApplication",
+            "projectName": "community-service"
+        },
+        {
+            "type": "java",
+            "name": "ChatServiceApplication",
+            "request": "launch",
+            "mainClass": "com.edutech.chat_service.ChatServiceApplication",
+            "projectName": "chat-service"
+        },
+        {
+            "type": "java",
+            "name": "AuthServiceApplication",
+            "request": "launch",
+            "mainClass": "com.edutech.auth_service.AuthServiceApplication",
+            "projectName": "auth-service"
+        },
+        {
+            "type": "java",
             "name": "EvaluationServiceApplication",
             "request": "launch",
             "mainClass": "com.edutech.evaluation_service.EvaluationServiceApplication",

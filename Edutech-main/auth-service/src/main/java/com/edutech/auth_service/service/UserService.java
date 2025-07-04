@@ -1,7 +1,12 @@
 package com.edutech.auth_service.service;
 
+import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +20,7 @@ import jakarta.transaction.Transactional;
 @Service // Contiene la lógica del negocio
 @Transactional // Deshace todos los cambios (rollback)
 
-public class UserService {
+public class UserService implements UserDetailsService{
     @Autowired
     private RolRepository rolRepository;
 
@@ -32,6 +37,22 @@ public class UserService {
     public User obtenerUserPorId(Long id){
         return userRepository.findById(id)
         .orElseThrow(()-> new RuntimeException("Usuario no encontrado Id: "+ id));
+    }
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username);
+
+        if (user == null) {
+            throw new UsernameNotFoundException("Usuario no encontrado: " + username);
+        }
+
+        String rolSpring = "ROLE_" + user.getRol().getNombre().toUpperCase();
+
+        return new org.springframework.security.core.userdetails.User(
+            user.getUsername(),
+            user.getPassword(),
+            Collections.singletonList(new SimpleGrantedAuthority(rolSpring))
+        );
     }
     
     public String eliminarUser(Long id){
