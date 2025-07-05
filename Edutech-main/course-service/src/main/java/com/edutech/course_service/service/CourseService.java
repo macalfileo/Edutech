@@ -31,14 +31,15 @@ public class CourseService {
         .orElseThrow(()-> new RuntimeException("Curso no encontrado Id: "+ id));
     }
 
-    public Course crearCourse(String titulo, String descripcion, Long instructorId, int duracionMinutos, String categoria) {
+    public Course crearCourse(String authHeader, String titulo, String descripcion, Long instructorId, int duracionMinutos, String categoria) {
         if (titulo == null || descripcion == null || instructorId == null || duracionMinutos < 45 || categoria == null) {
             throw new RuntimeException("Todos los campos son obligatorios y la duración debe ser al menos 45 minutos");
         }
-        if (!authClient.existeInstructor(instructorId)) {
-            throw new RuntimeException("El instructor con ID " + instructorId + " no existe");
+
+        if (!authClient.usuarioPuedeModificarCurso(authHeader, instructorId)) {
+            throw new RuntimeException("El instructor con ID " + instructorId + " no tiene permisos para este curso");
         }
-        
+
         Course curso = new Course();
         curso.setTitulo(titulo);
         curso.setDescripcion(descripcion);
@@ -49,9 +50,15 @@ public class CourseService {
         return courseRepository.save(curso);
     }
 
-    public Course actualizarCourse(Long id, String titulo, String descripcion, Long instructorId, Integer duracionMinutos, String categoria) {
+
+    public Course actualizarCourse(String authHeader, Long id, String titulo, String descripcion, Long instructorId, Integer duracionMinutos, String categoria) {
         Course curso = courseRepository.findById(id)
         .orElseThrow(()-> new RuntimeException("Curso no encontrado Id: "+ id));
+
+        // Validación: ¿Es administrador o el mismo instructor?
+        if (!authClient.usuarioPuedeModificarCurso(authHeader, curso.getInstructorId())) {
+            throw new RuntimeException("No tienes permiso para modificar este curso");
+        }
 
         if (titulo != null && !titulo.trim().isEmpty()) {
             curso.setTitulo(titulo);
@@ -76,12 +83,17 @@ public class CourseService {
         return courseRepository.save(curso);
     }
 
-    public String eliminarCourse(Long id) {
+    public String eliminarCourse(String authHeader, Long id) {
         Course curso = courseRepository.findById(id)
-        .orElseThrow(()-> new RuntimeException("Curso no encontrado Id: "+ id));
+            .orElseThrow(() -> new RuntimeException("Curso no encontrado Id: " + id));
+
+        if (!authClient.usuarioPuedeModificarCurso(authHeader, curso.getInstructorId())) {
+            throw new RuntimeException("No tienes permiso para eliminar este curso");
+        }
 
         courseRepository.delete(curso);
         return "Curso eliminado";
     }
+
 
 }

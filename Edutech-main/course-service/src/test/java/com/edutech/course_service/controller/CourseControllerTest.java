@@ -1,6 +1,10 @@
 
 package com.edutech.course_service.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -54,29 +58,54 @@ public class CourseControllerTest {
 
     @Test // Crear módulo
     void crearModulo_returnCreated() throws Exception {
-        Modulo m = new Modulo(); m.setId(1L); m.setTitulo("Módulo 1");
-        when(moduloService.crearModulo(any(), any(), any(), any())).thenReturn(m);
+        Modulo m = new Modulo();
+        m.setId(1L);
+        m.setTitulo("Módulo 1");
 
-        String body = "{ \"titulo\": \"Módulo 1\", \"descripcion\": \"Desc\", \"orden\": 1 }";
+        when(moduloService.crearModulo(anyString(), anyString(), anyString(), anyInt(), anyLong()))
+            .thenReturn(m);
 
-        mockMvc.perform(post("/api/v1/courses/modulos?cursoId=1")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+        String body = """
+            {
+                "titulo": "Módulo 1",
+                "descripcion": "Desc",
+                "orden": 1,
+                "curso": { "id": 1 }
+            }
+            """;
+
+        mockMvc.perform(post("/api/v1/courses/modulos")
+                .header("Authorization", "Bearer fakeToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.titulo").value("Módulo 1"));
     }
 
+
     @Test // Crear curso inválido
-    void crearCurso_datosInvalidos_return404() throws Exception {
-        when(courseService.crearCourse(any(), any(), any(), anyInt(), any()))
+    void crearCurso_datosInvalidos_return403() throws Exception {
+        when(courseService.crearCourse(anyString(), any(), any(), anyLong(), anyInt(), any()))
             .thenThrow(new RuntimeException("Instructor no encontrado"));
 
+        String body = """
+            {
+                "titulo": "Curso X",
+                "descripcion": "Descripción",
+                "instructorId": 99,
+                "duracionMinutos": 60,
+                "categoria": "Programación"
+            }
+            """;
+
         mockMvc.perform(post("/api/v1/courses/cursos")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("{}"))
-            .andExpect(status().isNotFound())
+                .header("Authorization", "Bearer fakeToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isForbidden())
             .andExpect(jsonPath("$").value("Instructor no encontrado"));
     }
+
 
     @Test // Eliminar contenido
     void eliminarContenido_returnOK() throws Exception {

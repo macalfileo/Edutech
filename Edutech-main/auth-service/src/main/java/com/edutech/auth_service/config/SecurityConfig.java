@@ -8,25 +8,25 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableMethodSecurity // Habilita la seguridad a nivel de método, permitiendo usar anotaciones como @PreAuthorize
+@EnableMethodSecurity
 public class SecurityConfig {
+
     @Autowired
-    private JwtRequestFilter jwtRequestFilter; // Filtro para manejar JWT en las solicitudes
-    
+    private JwtRequestFilter jwtRequestFilter;
+
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception { // Configuración de seguridad HTTP
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // Desactiva CSRF para simplificar las pruebas
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/swagger-ui/**",
@@ -34,13 +34,13 @@ public class SecurityConfig {
                     "/swagger-ui.html",
                     "/api/v1/roles",
                     "/api/v1/auth/login"
-                ).permitAll() // Permite acceso a Swagger y documentación de la API
-                .requestMatchers("/api/v1/users").permitAll() // Solo ADMINISTRADOR puede acceder a /api/v1/users
-                .anyRequest().authenticated() // Requiere autenticación para cualquier otra solicitud
+                ).permitAll()
+                .requestMatchers("/api/v1/users").hasRole("ADMINISTRADOR")
+                .anyRequest().authenticated()
             )
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
-        return http.build(); 
-    }
 
+        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        return http.build();
+    }
 }

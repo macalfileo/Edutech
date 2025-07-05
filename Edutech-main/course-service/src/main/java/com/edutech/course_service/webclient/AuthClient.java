@@ -15,14 +15,28 @@ public class AuthClient {
                 .build();
     }
 
-    public boolean existeInstructor(Long instructorId) {
+    public boolean existeInstructor(Long instructorId, String authHeader) {
         try {
             webClient.get()
                 .uri("/users/{id}", instructorId)
+                .header("Authorization", authHeader)
                 .retrieve()
                 .bodyToMono(Void.class)
-                .block(); 
+                .block();
             return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean usuarioPuedeModificarCurso(String authHeader, Long instructorId) {
+        try {
+            return webClient.get()
+                .uri("/auth/validate-course-access/{instructorId}", instructorId)
+                .header("Authorization", authHeader)
+                .retrieve()
+                .bodyToMono(Boolean.class)
+                .block();
         } catch (Exception e) {
             return false;
         }

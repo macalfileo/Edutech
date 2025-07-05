@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.edutech.course_service.model.Contenido;
@@ -41,7 +41,15 @@ public class CourseController {
 
     // Obtener todos los cursos
     @Operation(summary = "Obtener todos los cursos", description = "Devuelve todos los cursos registrados.")
-    @ApiResponse(responseCode = "200", description = "Lista de cursos obtenida correctamente", content = @Content(schema = @Schema(implementation = Course.class)))
+    @ApiResponse(
+        responseCode = "200",
+        description = "Lista de cursos obtenida correctamente",
+        content = @Content(schema = @Schema(implementation = Course.class)))
+    @ApiResponse(
+        responseCode = "204",
+        description = "No hay cursos registrados",
+        content = @Content
+        )
     @GetMapping("/cursos")
     public ResponseEntity<List<Course>> getCourse() {
         List<Course> cursos = courseService.obtenerCourses();
@@ -54,6 +62,7 @@ public class CourseController {
     // Obtener todos los módulos
     @Operation(summary = "Obtener todos los módulos", description = "Devuelve todos los módulos registrados.")
     @ApiResponse(responseCode = "200", description = "Lista de módulos obtenida correctamente", content = @Content(schema = @Schema(implementation = Modulo.class)))
+    @ApiResponse(responseCode = "204", description = "No hay módulos registrados", content = @Content)
     @GetMapping("/modulos")
     public ResponseEntity<List<Modulo>> getModulo() {
         List<Modulo> modulos = moduloService.obtenerModulos();
@@ -148,23 +157,26 @@ public class CourseController {
     @ApiResponse(responseCode = "201", description = "Curso creado exitosamente", content = @Content(schema = @Schema(implementation = Course.class)))
     @ApiResponse(responseCode = "404", description = "Error en los datos enviados", content = @Content)
     @PostMapping("/cursos")
-    public ResponseEntity<?> crearCourse(@RequestBody Course curso){
+    public ResponseEntity<?> crearCourse(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Course curso) {
         try {
-            Course nuevo = courseService.crearCourse(curso.getTitulo(), curso.getDescripcion(), curso.getInstructorId(), curso.getDuracionMinutos(), curso.getCategoria());
+            Course nuevo = courseService.crearCourse(authHeader, curso.getTitulo(), curso.getDescripcion(), curso.getInstructorId(), curso.getDuracionMinutos(), curso.getCategoria());
             return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
     }
+
 
     // Crear nuevo módulo
     @Operation(summary = "Crear un nuevo módulo", description = "Registra un nuevo módulo asociado a un curso.")
     @ApiResponse(responseCode = "201", description = "Módulo creado exitosamente", content = @Content(schema = @Schema(implementation = Modulo.class)))
     @ApiResponse(responseCode = "404", description = "Error en los datos enviados", content = @Content)
     @PostMapping("/modulos")
-    public ResponseEntity<?> crearModulo(@RequestBody Modulo modulo, @RequestParam Long cursoId){
+    public ResponseEntity<?> crearModulo(@RequestHeader("Authorization") String authHeader, @RequestBody Modulo modulo){
         try {
-            Modulo nuevo = moduloService.crearModulo(modulo.getTitulo(), modulo.getDescripcion(), modulo.getOrden(), cursoId);
+            Modulo nuevo = moduloService.crearModulo(authHeader, modulo.getTitulo(), modulo.getDescripcion(), modulo.getOrden(), modulo.getCurso().getId());
             return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -190,11 +202,26 @@ public class CourseController {
     @ApiResponse(responseCode = "200", description = "Curso actualizado exitosamente", content = @Content(schema = @Schema(implementation = Course.class)))
     @ApiResponse(responseCode = "404", description = "Curso no encontrado", content = @Content)
     @PutMapping("/cursos/{id}")
-    public ResponseEntity<?> actualizarCourse(@PathVariable Long id, @RequestBody Course curso) {
+    public ResponseEntity<?> actualizarCourse(
+        @RequestHeader("Authorization") String authHeader,
+        @PathVariable Long id,
+        @RequestBody Course curso
+    ) {
         try {
-            Course actualizado = courseService.actualizarCourse(id, curso.getTitulo(), curso.getDescripcion(), curso.getInstructorId(), curso.getDuracionMinutos(), curso.getCategoria());
+            Course actualizado = courseService.actualizarCourse(
+                authHeader,
+                id,
+                curso.getTitulo(),
+                curso.getDescripcion(),
+                curso.getInstructorId(),
+                curso.getDuracionMinutos(),
+                curso.getCategoria()
+            );
             return ResponseEntity.ok(actualizado);
         } catch (RuntimeException e) {
+            if (e.getMessage().contains("permiso")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            }
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
@@ -204,14 +231,28 @@ public class CourseController {
     @ApiResponse(responseCode = "200", description = "Módulo actualizado exitosamente", content = @Content(schema = @Schema(implementation = Modulo.class)))
     @ApiResponse(responseCode = "404", description = "Módulo no encontrado", content = @Content)
     @PutMapping("/modulos/{id}")
-    public ResponseEntity<?> actualizarModulo(@PathVariable Long id, @RequestBody Modulo modulo) {
+    public ResponseEntity<?> actualizarModulo(
+        @RequestHeader("Authorization") String authHeader,
+        @PathVariable Long id,
+        @RequestBody Modulo modulo
+    ) {
         try {
-            Modulo actualizado = moduloService.actualizarModulo(id, modulo.getTitulo(), modulo.getDescripcion(), modulo.getOrden());
+            Modulo actualizado = moduloService.actualizarModulo(
+                authHeader,
+                id,
+                modulo.getTitulo(),
+                modulo.getDescripcion(),
+                modulo.getOrden(),
+                modulo.getCurso().getId()
+            );
             return ResponseEntity.ok(actualizado);
         } catch (RuntimeException e) {
+            if (e.getMessage().contains("permiso")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            }
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-    }
+}
 
     // Actualizar contenido
     @Operation(summary = "Actualizar contenido", description = "Actualiza los datos de un contenido dado su ID.")
@@ -232,9 +273,9 @@ public class CourseController {
     @ApiResponse(responseCode = "200", description = "Curso eliminado correctamente", content = @Content)
     @ApiResponse(responseCode = "404", description = "Curso no encontrado", content = @Content)
     @DeleteMapping("/cursos/{id}")
-    public ResponseEntity<?> eliminarCourse(@PathVariable Long id) {
+    public ResponseEntity<?> eliminarCourse(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
         try {
-            String mensaje = courseService.eliminarCourse(id);
+            String mensaje = courseService.eliminarCourse(authHeader, id);
             return ResponseEntity.ok(mensaje);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -246,11 +287,14 @@ public class CourseController {
     @ApiResponse(responseCode = "200", description = "Módulo eliminado correctamente", content = @Content)
     @ApiResponse(responseCode = "404", description = "Módulo no encontrado", content = @Content)
     @DeleteMapping("/modulos/{id}")
-    public ResponseEntity<?> eliminarModulo(@PathVariable Long id) {
+    public ResponseEntity<?> eliminarModulo(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
         try {
-            String mensaje = moduloService.eliminarModulo(id);
+            String mensaje = moduloService.eliminarModulo(authHeader, id);
             return ResponseEntity.ok(mensaje);
         } catch (RuntimeException e) {
+           if (e.getMessage().contains("permiso")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            }
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }

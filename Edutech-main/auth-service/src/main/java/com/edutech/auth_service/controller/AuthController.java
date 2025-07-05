@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.edutech.auth_service.config.JwtUtil;
 import com.edutech.auth_service.model.Rol;
 import com.edutech.auth_service.model.User;
+import com.edutech.auth_service.repository.UserRepository;
 import com.edutech.auth_service.service.RolService;
 import com.edutech.auth_service.service.UserService;
 
@@ -42,6 +44,7 @@ public class AuthController {
 
     @Autowired // Inyecta el Service para para usar sus métodos
     private RolService rolService;
+    
     @Autowired
     private JwtUtil jwtUtil; // Inyecta el JwtUtil para manejar tokens JWT
 
@@ -50,6 +53,10 @@ public class AuthController {
 
     @Autowired
     private UserDetailsService userDetailsService; // Inyecta el UserDetailsService para cargar detalles del usuario
+    
+    @Autowired
+    private UserRepository userRepository; // Inyecta el UserRepository para acceder a los usuarios
+    
     // Endpoint para consultar los roles
     @Operation(summary = "Obtener una lista de todos los roles", description = "Retorna todos los roles registrados en el sistema.")
     @ApiResponse(
@@ -138,6 +145,26 @@ public class AuthController {
         }
     }
 
+    @GetMapping("/auth/validate-course-access/{instructorId}")
+    public ResponseEntity<Boolean> validarPermisoCurso(
+            @PathVariable Long instructorId,
+            @RequestHeader("Authorization") String authHeader) {
+
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) return ResponseEntity.ok(false);
+
+        boolean isAdmin = auth.getAuthorities().stream()
+            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR"));
+    
+        String username = auth.getName();
+        User user = userRepository.findByUsername(username);
+
+        boolean esInstructorDelCurso = user != null && user.getId().equals(instructorId);
+
+        return ResponseEntity.ok(isAdmin || esInstructorDelCurso);
+    }
+
+
     // Endpoint para crear un usuario nuevo
     @Operation(summary = "Crear nuevo usuario", description = "Registra un nuevo usuario con su respectivo rol.")
     @ApiResponse(
@@ -224,11 +251,12 @@ public class AuthController {
             Map<String, String> response = new HashMap<>();
             response.put("token", jwt);
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales incorrectas");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error en autenticación");
         }
     }
-
     // Endpoint para actualizar a los usuarios
     @Operation(summary = "Actualizar usuario", description = "Actualiza los datos de un usuario dado su ID.")
     @ApiResponse(
@@ -243,8 +271,13 @@ public class AuthController {
     )
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PutMapping("/users/{id}")
-    public ResponseEntity<?> actualizarUser(@PathVariable Long id, @RequestParam(required = false) String username,@RequestParam(required = false) String email, @RequestParam(required = false) String password, @RequestParam(required = false) Long rolId) {
+    public ResponseEntity<?> actualizarUser(@PathVariable Long id, @RequestBody Map<String, Object> datos) {
         try {
+            String username = (String) datos.get("username");
+            String email = (String) datos.get("email");
+            String password = (String) datos.get("password");
+            Long rolId = datos.get("rolId") != null ? Long.parseLong(datos.get("rolId").toString()) : null;
+
             User actualizado = userService.actualizarUser(id, username, email, password, rolId);
             return ResponseEntity.ok(actualizado);
         } catch (RuntimeException e) {

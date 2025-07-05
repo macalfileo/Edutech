@@ -25,34 +25,40 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     private org.springframework.security.core.userdetails.UserDetailsService userDetailsService;
 
     @Override
-    protected void doFilterInternal(
-            @org.springframework.lang.NonNull HttpServletRequest request,
-            @org.springframework.lang.NonNull HttpServletResponse response,
-            @org.springframework.lang.NonNull FilterChain chain)
-            throws ServletException, IOException {
+protected void doFilterInternal(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain chain) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
+    String path = request.getServletPath();
 
-        String username = null;
-        String jwt = null;
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            jwt = authHeader.substring(7);
-            username = jwtUtil.extractUsername(jwt);
-        }
-
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-            if (jwtUtil.validateToken(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities()
-                );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
-        }
-
+    // ✅ NO aplicar filtro JWT al login
+    if (path.contains("/auth/login")) {
         chain.doFilter(request, response);
+        return;
     }
+
+    final String authHeader = request.getHeader("Authorization");
+    String username = null;
+    String jwt = null;
+
+    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        jwt = authHeader.substring(7);
+        username = jwtUtil.extractUsername(jwt);
+    }
+
+    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+        if (jwtUtil.validateToken(jwt, userDetails)) {
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    userDetails, null, userDetails.getAuthorities());
+            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+        }
+    }
+
+    chain.doFilter(request, response);
+}
+
 }
