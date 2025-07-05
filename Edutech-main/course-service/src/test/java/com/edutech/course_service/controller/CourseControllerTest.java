@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -107,12 +108,15 @@ public class CourseControllerTest {
     }
 
 
-    @Test // Eliminar contenido
+    @Test // Eliminar contenido con token
     void eliminarContenido_returnOK() throws Exception {
-        when(contenidoService.eliminarContenido(1L)).thenReturn("Contenido eliminado");
+        when(contenidoService.eliminarContenido(eq("Bearer token123"), eq(1L)))
+            .thenReturn("Contenido eliminado");
 
-        mockMvc.perform(delete("/api/v1/courses/contenidos/1"))
+        mockMvc.perform(delete("/api/v1/courses/contenidos/1")
+            .header("Authorization", "Bearer token123"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").value("Contenido eliminado"));
     }
+
 }

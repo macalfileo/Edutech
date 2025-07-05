@@ -9,6 +9,7 @@ import com.edutech.course_service.model.Contenido;
 import com.edutech.course_service.model.Modulo;
 import com.edutech.course_service.repository.ContenidoRepository;
 import com.edutech.course_service.repository.ModuloRepository;
+import com.edutech.course_service.webclient.AuthClient;
 
 import jakarta.transaction.Transactional;
 
@@ -20,6 +21,9 @@ public class ContenidoService {
 
     @Autowired
     private ModuloRepository moduloRepository;
+
+    @Autowired
+    private AuthClient authClient;
 
     // Obtener todos los contenidos
     public List<Contenido> obtenerContenidos() {
@@ -38,27 +42,41 @@ public class ContenidoService {
     }
 
     // Crear contenido nuevo
-    public Contenido crearContenido(String titulo, String tipo, String url, Long moduloId) {
-        if (titulo == null || tipo == null || url == null || moduloId == null) {
-            throw new RuntimeException("Todos los campos son obligatorios");
+    public Contenido crearContenido(String authHeader, String titulo, String tipo, String url, Long moduloId) {
+        if (titulo == null || tipo == null || moduloId == null) {
+            throw new RuntimeException("El título, tipo y módulo son obligatorios");
         }
 
-        Modulo modulo = moduloRepository.findById(moduloId)
-        .orElseThrow(() -> new RuntimeException("Módulo no encontrado Id: " + moduloId));
+       Modulo modulo = moduloRepository.findById(moduloId)
+            .orElseThrow(() -> new RuntimeException("Módulo no encontrado"));
 
-        Contenido nuevo = new Contenido();
-        nuevo.setTitulo(titulo);
-        nuevo.setTipo(tipo);
-        nuevo.setUrl(url);
-        nuevo.setModulo(modulo);
+        Long instructorId = modulo.getCurso().getInstructorId();
 
-        return contenidoRepository.save(nuevo);
+       if (!authClient.usuarioPuedeModificarCurso(authHeader, instructorId)) {
+            throw new RuntimeException("No tienes permiso para agregar contenido a este módulo");
+        }
+
+        Contenido contenido = new Contenido();
+        contenido.setTitulo(titulo);
+        contenido.setDescripcion("Contenido de " + titulo); // Puedes personalizar esto si lo deseas
+        contenido.setTipo(tipo);
+        contenido.setUrl(url);
+        contenido.setModulo(modulo);
+
+        return contenidoRepository.save(contenido);
     }
 
+
     // Actualizar contenido
-    public Contenido actualizarContenido(Long id, String titulo, String tipo, String url) {
+    public Contenido actualizarContenido(String authHeader, Long id, String titulo, String tipo, String url) {
         Contenido contenido = contenidoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Contenido no encontrado Id: " + id));
+            .orElseThrow(() -> new RuntimeException("Contenido no encontrado Id: " + id));
+
+        Long instructorId = contenido.getModulo().getCurso().getInstructorId();
+
+        if (!authClient.usuarioPuedeModificarCurso(authHeader, instructorId)) {
+            throw new RuntimeException("No tienes permiso para modificar este contenido");
+        }
 
         if (titulo != null && !titulo.trim().isEmpty()) {
             contenido.setTitulo(titulo);
@@ -75,12 +93,20 @@ public class ContenidoService {
         return contenidoRepository.save(contenido);
     }
 
+
     // Eliminar contenido
-    public String eliminarContenido(Long id) {
+    public String eliminarContenido(String authHeader, Long id) {
         Contenido contenido = contenidoRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Contenido no encontrado Id: " + id));
+            .orElseThrow(() -> new RuntimeException("Contenido no encontrado Id: " + id));
+
+        Long instructorId = contenido.getModulo().getCurso().getInstructorId();
+
+        if (!authClient.usuarioPuedeModificarCurso(authHeader, instructorId)) {
+            throw new RuntimeException("No tienes permiso para eliminar este contenido");
+        }
 
         contenidoRepository.delete(contenido);
         return "Contenido eliminado";
     }
+
 }

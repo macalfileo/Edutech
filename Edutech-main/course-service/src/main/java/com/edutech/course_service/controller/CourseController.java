@@ -188,11 +188,22 @@ public class CourseController {
     @ApiResponse(responseCode = "201", description = "Contenido creado exitosamente", content = @Content(schema = @Schema(implementation = Contenido.class)))
     @ApiResponse(responseCode = "404", description = "Error en los datos enviados", content = @Content)
     @PostMapping("/contenidos")
-    public ResponseEntity<?> crearContenido(@RequestBody Contenido contenidos){
+    public ResponseEntity<?> crearContenido(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Contenido contenidos) {
         try {
-            Contenido nuevo = contenidoService.crearContenido(contenidos.getTitulo(), contenidos.getTipo(), contenidos.getUrl(), contenidos.getModulo().getId());
+            Contenido nuevo = contenidoService.crearContenido(
+                authHeader,
+                contenidos.getTitulo(),
+                contenidos.getTipo(),
+                contenidos.getUrl(),
+                contenidos.getModulo().getId()
+            );
             return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
         } catch (RuntimeException e) {
+            if (e.getMessage().contains("permiso")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            }
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
@@ -259,13 +270,25 @@ public class CourseController {
     @ApiResponse(responseCode = "200", description = "Contenido actualizado exitosamente", content = @Content(schema = @Schema(implementation = Contenido.class)))
     @ApiResponse(responseCode = "404", description = "Contenido no encontrado", content = @Content)
     @PutMapping("/contenidos/{id}")
-    public ResponseEntity<?> actualizarContenido(@PathVariable Long id, @RequestBody Contenido contenidos) {
+    public ResponseEntity<?> actualizarContenido(
+        @RequestHeader("Authorization") String authHeader,
+        @PathVariable Long id,
+        @RequestBody Contenido contenidos) {
         try {
-            Contenido actualizado = contenidoService.actualizarContenido(id,contenidos.getTitulo(), contenidos.getTipo(), contenidos.getUrl());
+            Contenido actualizado = contenidoService.actualizarContenido(
+                authHeader,
+                id,
+                contenidos.getTitulo(),
+                contenidos.getTipo(),
+                contenidos.getUrl()
+            );
             return ResponseEntity.ok(actualizado);
         } catch (RuntimeException e) {
+            if (e.getMessage().contains("permiso")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            }
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+       }
     }
 
     // Eliminar curso
@@ -304,11 +327,14 @@ public class CourseController {
     @ApiResponse(responseCode = "200", description = "Contenido eliminado correctamente", content = @Content)
     @ApiResponse(responseCode = "404", description = "Contenido no encontrado", content = @Content)
     @DeleteMapping("/contenidos/{id}")
-    public ResponseEntity<?> eliminarContenido(@PathVariable Long id) {
+    public ResponseEntity<?> eliminarContenido(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
         try {
-            String mensaje = contenidoService.eliminarContenido(id);
+            String mensaje = contenidoService.eliminarContenido(authHeader, id);
             return ResponseEntity.ok(mensaje);
         } catch (RuntimeException e) {
+            if (e.getMessage().contains("permiso")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            }
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
