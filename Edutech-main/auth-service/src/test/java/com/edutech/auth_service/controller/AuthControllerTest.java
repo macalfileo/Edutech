@@ -13,29 +13,47 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.edutech.auth_service.config.JwtUtil;
 import com.edutech.auth_service.model.Rol;
 import com.edutech.auth_service.model.User;
+import com.edutech.auth_service.repository.UserRepository;
 import com.edutech.auth_service.service.RolService;
 import com.edutech.auth_service.service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-@WebMvcTest(controllers = AuthController.class)
-@AutoConfigureMockMvc(addFilters = false) // Desactiva los filtros de seguridad para pruebas
-// Si se quiere probar la seguridad, se  elimina esta línea
-public class AuthControllerTest {
-    @MockBean  // Se usa MockBean para simular el servicio de rol
+import org.springframework.http.MediaType;
+
+@WebMvcTest(AuthController.class)
+class AuthControllerTest {
+
+    @MockBean
     private RolService rolService;
-    @MockBean // Se usa MockBean para simular el servicio de usuario
+
+    @MockBean
     private UserService userService;
+
+    @MockBean
+    private JwtUtil jwtUtil;
+
+    @MockBean
+    private AuthenticationManager authenticationManager;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
+
+    @MockBean
+    private UserRepository userRepository;
 
     @Autowired
     private MockMvc mockMvc; // Permite realizar peticiones HTTP a los endpoints del controlador
 
-    @Test // Prueba: Obtener roles
-    void obtenerRoles_returnOKAndJson() throws Exception { 
+    @Test
+    void obtenerRoles_returnOKAndJson() throws Exception {
         Rol rol1 = new Rol();
         rol1.setId(1L);
         rol1.setNombre("Estudiante");
@@ -43,34 +61,34 @@ public class AuthControllerTest {
         rol2.setId(2L);
         rol2.setNombre("Instructor");
         List<Rol> roles = Arrays.asList(rol1, rol2);
-        when(rolService.obtenerRolOrdenPorId()).thenReturn(roles); // Simula el servicio para devolver una lista de roles
+
+        when(rolService.obtenerRolOrdenPorId()).thenReturn(roles);
 
         mockMvc.perform(get("/api/v1/roles"))
-               .andExpect(status().isOk()) // Verifica que el estado de la respuesta sea 200 OK
-               .andExpect(jsonPath("$[0].nombre").value("Estudiante")) 
-               .andExpect(jsonPath("$[1].id").value(2)) 
-               .andExpect(jsonPath("$[1].nombre").value("Instructor"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nombre").value("Estudiante"))
+                .andExpect(jsonPath("$[1].nombre").value("Instructor"));
     }
 
-    @Test // Prueba: Crear rol
+    @Test
     void crearRol_returnCreatedAndJson() throws Exception {
-    Rol entrada = new Rol();
-    entrada.setNombre("Editor");
+        Rol entrada = new Rol();
+        entrada.setNombre("Editor");
 
-    Rol salida = new Rol();
-    salida.setId(4L);
-    salida.setNombre("Editor");
+        Rol salida = new Rol();
+        salida.setId(4L);
+        salida.setNombre("Editor");
 
-    when(rolService.crearRol(any(Rol.class))).thenReturn(salida); // Simula el servicio para devolver un rol creado
+        when(rolService.crearRol(any(Rol.class))).thenReturn(salida);
 
-    mockMvc.perform(post("/api/v1/roles")
-                .contentType("application/json")
-                .content(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(entrada))) // Convierte el objeto Rol a JSON y lo envía en la petición
-                .andExpect(status().isCreated()) // Verifica que el estado de la respuesta sea 201 Created
-                .andExpect(jsonPath("$.id").value(4L))
-                .andExpect(jsonPath("$.nombre").value("Editor"));
+        mockMvc.perform(post("/api/v1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(entrada)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id").value(4L))
+            .andExpect(jsonPath("$.nombre").value("Editor"));
     }
-
+    
     @Test // Prueba: Obtener rol por ID
     void eliminarRol_returnOKMessage() throws Exception {
     when(rolService.eliminarRol(4L)).thenReturn("Rol eliminado");

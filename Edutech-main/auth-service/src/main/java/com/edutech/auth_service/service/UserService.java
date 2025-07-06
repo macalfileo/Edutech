@@ -70,12 +70,13 @@ public class UserService implements UserDetailsService{
         User user = userRepository.findById(id)
         .orElseThrow(()-> new RuntimeException("Usuario no encontrado"));
 
-        if (username != null && !username.trim().isEmpty()) {
+        if (username != null && !username.trim().isEmpty() && !username.equals(user.getUsername())) {
             if (userRepository.existsByUsername(username)) {
                 throw new RuntimeException("Ya existe un usuario con ese nombre");
             }
-            user.setUsername(username); 
+            user.setUsername(username);
         }
+
 
         if (email != null && !email.trim().isEmpty()) {
             if (userRepository.existsByEmail(email)) {

@@ -65,7 +65,7 @@ public class AuthController {
         content = @Content(schema = @Schema(implementation = Rol.class))
     )
     @ApiResponse(
-        responseCode = "404",
+        responseCode = "204",
         description = "Lista de roles no encontrado",
         content = @Content(schema = @Schema(implementation = Rol.class))
     )
@@ -108,7 +108,7 @@ public class AuthController {
         content = @Content(schema = @Schema(implementation = User.class))
     )
     @ApiResponse(
-        responseCode = "404",
+        responseCode = "204",
         description = "Lista de usuarios no encontrado",
         content = @Content(schema = @Schema(implementation = User.class))
     )
@@ -133,6 +133,11 @@ public class AuthController {
         responseCode = "404",
         description = "Usuario no encontrado",
         content = @Content(schema = @Schema(implementation = User.class))
+    )
+    @ApiResponse(
+        responseCode = "403",
+        description = "Acceso denegado por falta de permisos",
+        content = @Content
     )
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @GetMapping("/users/{id}")
@@ -173,9 +178,14 @@ public class AuthController {
         content = @Content(schema = @Schema(implementation = User.class))
     )
     @ApiResponse(
-        responseCode = "404",
+        responseCode = "400",
         description = "Error en los datos enviados",
         content = @Content(schema = @Schema(implementation = User.class))
+    )
+    @ApiResponse(
+        responseCode = "403",
+        description = "Acceso denegado por falta de permisos",
+        content = @Content
     )
     //@PreAuthorize("hasRole('ADMINISTRADOR')")
     @PostMapping("/users")
@@ -208,7 +218,7 @@ public class AuthController {
         content = @Content(schema = @Schema(implementation = Rol.class))
     )
     @ApiResponse(
-        responseCode = "404",
+        responseCode = "400",
         description = "Error en los datos enviados",
         content = @Content(schema = @Schema(implementation = Rol.class))
     )
@@ -268,6 +278,11 @@ public class AuthController {
         responseCode = "404",
         description = "Usuario no encontrado",
         content = @Content(schema = @Schema(implementation = User.class))
+    )
+    @ApiResponse(
+        responseCode = "403",
+        description = "Acceso denegado por falta de permisos",
+        content = @Content
     )
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PutMapping("/users/{id}")
@@ -340,6 +355,11 @@ public class AuthController {
         responseCode = "404",
         description = "Usuario no encontrado",
         content = @Content(schema = @Schema(implementation = User.class))
+    )
+    @ApiResponse(
+        responseCode = "403",
+        description = "Acceso denegado por falta de permisos",
+        content = @Content
     )
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @DeleteMapping("/users/{id}")

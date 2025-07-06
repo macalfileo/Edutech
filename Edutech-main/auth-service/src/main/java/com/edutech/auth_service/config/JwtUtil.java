@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -41,12 +42,16 @@ public class JwtUtil {
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(SECRET_KEY.getBytes())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-    }
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(SECRET_KEY.getBytes())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (JwtException e) {
+            throw new RuntimeException("Token inválido o expirado");
+        }
+    } 
 
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
