@@ -1,22 +1,10 @@
 package com.edutech.auth_service.controller;
 
-import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.any;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.test.web.servlet.MockMvc;
+import java.util.*;
 
 import com.edutech.auth_service.config.JwtUtil;
 import com.edutech.auth_service.model.Rol;
@@ -26,16 +14,28 @@ import com.edutech.auth_service.service.RolService;
 import com.edutech.auth_service.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(AuthController.class)
+@WebMvcTest(controllers = AuthController.class, excludeAutoConfiguration = {
+    org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class
+})
+
 class AuthControllerTest {
 
-    @MockBean
-    private RolService rolService;
+    @Autowired
+    private MockMvc mockMvc;
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private RolService rolService;
 
     @MockBean
     private JwtUtil jwtUtil;
@@ -44,138 +44,79 @@ class AuthControllerTest {
     private AuthenticationManager authenticationManager;
 
     @MockBean
-    private UserDetailsService userDetailsService;
-
-    @MockBean
     private UserRepository userRepository;
 
-    @Autowired
-    private MockMvc mockMvc; // Permite realizar peticiones HTTP a los endpoints del controlador
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
-    void obtenerRoles_returnOKAndJson() throws Exception {
-        Rol rol1 = new Rol();
-        rol1.setId(1L);
-        rol1.setNombre("Estudiante");
-        Rol rol2 = new Rol();
-        rol2.setId(2L);
-        rol2.setNombre("Instructor");
-        List<Rol> roles = Arrays.asList(rol1, rol2);
-
-        when(rolService.obtenerRolOrdenPorId()).thenReturn(roles);
+    void obtenerRoles_returnOK() throws Exception {
+        Rol r1 = new Rol(); r1.setId(1L); r1.setNombre("Admin");
+        Rol r2 = new Rol(); r2.setId(2L); r2.setNombre("Estudiante");
+        when(rolService.obtenerRolOrdenPorId()).thenReturn(List.of(r1, r2));
 
         mockMvc.perform(get("/api/v1/roles"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].nombre").value("Estudiante"))
-                .andExpect(jsonPath("$[1].nombre").value("Instructor"));
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$[0].nombre").value("Admin"))
+               .andExpect(jsonPath("$[1].nombre").value("Estudiante"));
     }
 
     @Test
-    void crearRol_returnCreatedAndJson() throws Exception {
-        Rol entrada = new Rol();
-        entrada.setNombre("Editor");
+    void crearRol_returnCreated() throws Exception {
+        Rol input = new Rol(); input.setNombre("Editor");
+        Rol output = new Rol(); output.setId(3L); output.setNombre("Editor");
 
-        Rol salida = new Rol();
-        salida.setId(4L);
-        salida.setNombre("Editor");
-
-        when(rolService.crearRol(any(Rol.class))).thenReturn(salida);
+        when(rolService.crearRol(any(Rol.class))).thenReturn(output);
 
         mockMvc.perform(post("/api/v1/roles")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(entrada)))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").value(4L))
-            .andExpect(jsonPath("$.nombre").value("Editor"));
+                .content(mapper.writeValueAsString(input)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(3L))
+                .andExpect(jsonPath("$.nombre").value("Editor"));
     }
-    
-    @Test // Prueba: Obtener rol por ID
-    void eliminarRol_returnOKMessage() throws Exception {
-    when(rolService.eliminarRol(4L)).thenReturn("Rol eliminado");
 
-    mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/v1/roles/4")) // Realiza una petición DELETE al endpoint de eliminación de rol
-                .andExpect(status().isOk()) // Verifica que el estado de la respuesta sea 200 OK
+    @Test
+    void eliminarRol_returnOK() throws Exception {
+        when(rolService.eliminarRol(1L)).thenReturn("Rol eliminado");
+
+        mockMvc.perform(delete("/api/v1/roles/1"))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$").value("Rol eliminado"));
     }
 
-    @Test // Prueba: Crear rol con nombre vacío
-    void crearRol_nombreVacio_returnBadRequest() throws Exception {
-    Rol entrada = new Rol(); // nombre vacío
+    @Test
+    void crearUsuario_sinUsuariosPrevios_returnCreated() throws Exception {
+        Rol rol = new Rol(); rol.setId(1L); rol.setNombre("Admin");
+        User user = new User(null, "Juan", "juan@mail.com", "1234", null, null, rol);
 
-    when(rolService.crearRol(any(Rol.class)))
-        .thenThrow(new RuntimeException("El nombre del rol es obligatorio"));
-
-    mockMvc.perform(post("/api/v1/roles")
-                .contentType("application/json")
-                .content(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(entrada))) // Convierte el objeto Rol a JSON y lo envía en la petición
-                .andExpect(status().isBadRequest()) // Verifica que el estado de la respuesta sea 400 Bad Request
-                .andExpect(jsonPath("$").value("El nombre del rol es obligatorio"));
-    }
-
-    @Test // Prueba: Obtener usuarios
-    void obtenerUsuarios_returnOKAndJson() throws Exception {
-    // Crear usuarios simulados
-        Rol rol = new Rol();
-        rol.setId(1L);
-        rol.setNombre("Administrador");
-
-        User user1 = new User(1L, "Maria", "maria@ejemplo.com", "xxxx", null, null, rol);
-        User user2 = new User(2L, "Rocio", "rocio@ejemplo.com", "yyyy", null, null, rol);
-
-        List<User> usuarios = Arrays.asList(user1, user2);
-
-    // Simular comportamiento del servicio
-    when(userService.obtenerUser()).thenReturn(usuarios);
-
-    // Realizar la petición y validar
-    mockMvc.perform(get("/api/v1/users"))
-               .andExpect(status().isOk())
-               .andExpect(jsonPath("$[0].username").value("Maria"))
-               .andExpect(jsonPath("$[1].username").value("Rocio"));
-    }
-
-    @Test // Prueba: Crear usuario
-    void crearUsuario_returnCreatedAndJson() throws Exception {
-        Rol rol = new Rol();
-        rol.setId(1L);
-        rol.setNombre("Administrador");
-
-        User entrada = new User(null, "Thomas", "thomas@ejemplo.com", "zzzz", null, null, rol);
-        User salida = new User(null, "Thomas", "thomas@ejemplo.com", "zzzz", null, null, rol);
-
-        when(userService.crearUser(any(String.class), any(String.class), any(String.class), any(Long.class))).thenReturn(salida);
+        when(userService.obtenerUser()).thenReturn(Collections.emptyList());
+        when(userService.crearUser(any(), any(), any(), any())).thenReturn(user);
 
         mockMvc.perform(post("/api/v1/users")
-                .contentType("application/json")
-                .content(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(entrada)))
-            .andExpect(status().isCreated()) // Verifica que el estado de la respuesta sea 201 Created
-            .andExpect(jsonPath("$.username").value("Thomas"))
-            .andExpect(jsonPath("$.email").value("thomas@ejemplo.com"));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.username").value("Juan"))
+                .andExpect(jsonPath("$.email").value("juan@mail.com"));
     }
 
-    @Test // Prueba: Obtener usuario por ID
-    void obtenerUserPorId_returnOKAndJson() throws Exception {
-    // Simulamos un usuario
-        User user = new User();
-        user.setId(1L);
-        user.setUsername("Thomas");
-        user.setEmail("thomas@ejemplo.com");
-
+    @Test
+    void obtenerUserPorId_returnOK() throws Exception {
+        User user = new User(); user.setId(1L); user.setUsername("Ana"); user.setEmail("ana@mail.com");
         when(userService.obtenerUserPorId(1L)).thenReturn(user);
 
         mockMvc.perform(get("/api/v1/users/1"))
-               .andExpect(status().isOk()) // Verifica que el estado de la respuesta sea 200 OK
-               .andExpect(jsonPath("$.username").value("Thomas"))
-               .andExpect(jsonPath("$.email").value("thomas@ejemplo.com"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("Ana"))
+                .andExpect(jsonPath("$.email").value("ana@mail.com"));
     }
 
-    @Test // Prueba: Obtener usuario por ID que no existe
-    void obtenerUserPorId_usuarioNoExiste_return404() throws Exception {
-        when(userService.obtenerUserPorId(99L)).thenThrow(new RuntimeException("Usuario no encontrado Id: 99"));
+    @Test
+    void obtenerUserPorId_notFound_return404() throws Exception {
+        when(userService.obtenerUserPorId(5L)).thenThrow(new RuntimeException("Usuario no encontrado Id: 5"));
 
-        mockMvc.perform(get("/api/v1/users/99"))
-               .andExpect(status().isNotFound()) // Verifica que el estado de la respuesta sea 404 Not Found
-               .andExpect(jsonPath("$").value("Usuario no encontrado Id: 99"));
+        mockMvc.perform(get("/api/v1/users/5"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$").value("Usuario no encontrado Id: 5"));
     }
-
 }

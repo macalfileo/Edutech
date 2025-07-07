@@ -15,10 +15,11 @@ public class CourseClient {
             .build();
     }
 
-    public boolean existeCurso(Long courseId) {
+    public boolean cursoExiste(Long courseId, String authHeader) {
         try {
             webClient.get()
-                .uri("/courses/cursos/{id}", courseId)
+                .uri("/courses/{id}", courseId)
+                .header("Authorization", authHeader)
                 .retrieve()
                 .bodyToMono(Void.class)
                 .block();

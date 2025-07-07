@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import com.edutech.course_service.model.Course;
 import com.edutech.course_service.repository.CourseRepository;
 import com.edutech.course_service.webclient.AuthClient;
+import com.edutech.course_service.webclient.EnrollmentClient;
+import com.edutech.course_service.webclient.EvaluationClient;
 
 @Service
 @Transactional
@@ -21,6 +23,12 @@ public class CourseService {
 
     @Autowired
     private AuthClient authClient;
+
+    @Autowired
+    private EnrollmentClient enrollmentClient;
+
+    @Autowired
+    private EvaluationClient evaluationClient;
 
     public List<Course> obtenerCourses() {
         return courseRepository.findAll();
@@ -90,6 +98,9 @@ public class CourseService {
         if (!authClient.usuarioPuedeModificarCurso(authHeader, curso.getInstructorId())) {
             throw new RuntimeException("No tienes permiso para eliminar este curso");
         }
+
+        evaluationClient.eliminarEvaluacionesDeCurso(id);
+        enrollmentClient.eliminarInscripcionesDeCurso(id);
 
         courseRepository.delete(curso);
         return "Curso eliminado";

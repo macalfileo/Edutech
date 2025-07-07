@@ -39,19 +39,22 @@ public class EnrollmentServiceTest {
         Enrollment inscripcion = new Enrollment();
         inscripcion.setUserId(1L);
         inscripcion.setCourseId(2L);
-        inscripcion.setEstado("activo");
+        inscripcion.setEstado("ACTIVA");
         inscripcion.setFechaInscripcion(java.time.LocalDateTime.now());
 
-        when(authClient.existeUsuario(1L)).thenReturn(true);
-        when(courseClient.existeCurso(2L)).thenReturn(true);
+        String authHeader = "Bearer fake-jwt-token";
+
+        when(authClient.usuarioExiste(1L, authHeader)).thenReturn(true);
+        when(courseClient.cursoExiste(2L, authHeader)).thenReturn(true);
+
         when(enrollmentRepository.existsByUserIdAndCourseId(1L, 2L)).thenReturn(false);
         when(enrollmentRepository.save(any(Enrollment.class))).thenReturn(inscripcion);
 
-        Enrollment resultado = enrollmentService.crearEnrollment(inscripcion);
+        Enrollment resultado = enrollmentService.crearEnrollment(inscripcion, authHeader);
 
         assertEquals(1L, resultado.getUserId());
         assertEquals(2L, resultado.getCourseId());
-        assertEquals("activo", resultado.getEstado());
+        assertEquals("ACTIVA", resultado.getEstado());
     }
 
     @Test
@@ -60,13 +63,15 @@ public class EnrollmentServiceTest {
         inscripcion.setUserId(1L);
         inscripcion.setCourseId(2L);
 
-        when(authClient.existeUsuario(1L)).thenReturn(false);
+        String authHeader = "Bearer fake-jwt-token";
+
+        when(authClient.usuarioExiste(1L, authHeader)).thenReturn(false);
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            enrollmentService.crearEnrollment(inscripcion);
+            enrollmentService.crearEnrollment(inscripcion, authHeader);
         });
 
-        assertEquals("Usuario no encontrado ID: 1", ex.getMessage());
+        assertEquals("El usuario no existe o no tiene permisos.", ex.getMessage());
     }
 
     @Test
@@ -75,14 +80,16 @@ public class EnrollmentServiceTest {
         inscripcion.setUserId(1L);
         inscripcion.setCourseId(2L);
 
-        when(authClient.existeUsuario(1L)).thenReturn(true);
-        when(courseClient.existeCurso(2L)).thenReturn(false);
+        String authHeader = "Bearer fake-jwt-token";
+
+        when(authClient.usuarioExiste(1L, authHeader)).thenReturn(true);
+        when(courseClient.cursoExiste(2L, authHeader)).thenReturn(false);
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            enrollmentService.crearEnrollment(inscripcion);
+            enrollmentService.crearEnrollment(inscripcion, authHeader);
         });
 
-        assertEquals("Curso no encontrado ID: 2", ex.getMessage());
+        assertEquals("El curso no existe o no se puede acceder.", ex.getMessage());
     }
 
     @Test
@@ -91,16 +98,17 @@ public class EnrollmentServiceTest {
         inscripcion.setUserId(1L);
         inscripcion.setCourseId(2L);
 
-        when(authClient.existeUsuario(1L)).thenReturn(true);
-        when(courseClient.existeCurso(2L)).thenReturn(true);
+        String authHeader = "Bearer fake-jwt-token";
+
         when(enrollmentRepository.existsByUserIdAndCourseId(1L, 2L)).thenReturn(true);
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            enrollmentService.crearEnrollment(inscripcion);
+            enrollmentService.crearEnrollment(inscripcion, authHeader);
         });
 
         assertEquals("El usuario ya está inscrito en este curso", ex.getMessage());
     }
+
 
     @Test
     void eliminarEnrollment_existente_noLanzaExcepcion() {
@@ -147,7 +155,19 @@ public class EnrollmentServiceTest {
         Enrollment resultado = enrollmentService.actualizarEnrollment(3L, 75, 8.5, "completado", null);
 
         assertEquals(75, resultado.getProgreso());
-        assertEquals(8.5, resultado.getNotaFinal());
+        assertEquals(null, resultado.getNotaFinal());
         assertEquals("completado", resultado.getEstado());
     }
+
+    @Test
+    void actualizarEnrollment_idNoExiste_lanzaExcepcion() {
+        when(enrollmentRepository.findById(999L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            enrollmentService.actualizarEnrollment(999L, 80, 6.5, "ACTIVA", true);
+        });
+
+        assertEquals("Inscripción no encontrada Id: 999", ex.getMessage());
+    }
+
 }

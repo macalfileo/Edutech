@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -156,6 +157,7 @@ public class CourseController {
     @Operation(summary = "Crear un nuevo curso", description = "Registra un nuevo curso con su información.")
     @ApiResponse(responseCode = "201", description = "Curso creado exitosamente", content = @Content(schema = @Schema(implementation = Course.class)))
     @ApiResponse(responseCode = "404", description = "Error en los datos enviados", content = @Content)
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('INSTRUCTOR')")
     @PostMapping("/cursos")
     public ResponseEntity<?> crearCourse(
             @RequestHeader("Authorization") String authHeader,
@@ -173,6 +175,7 @@ public class CourseController {
     @Operation(summary = "Crear un nuevo módulo", description = "Registra un nuevo módulo asociado a un curso.")
     @ApiResponse(responseCode = "201", description = "Módulo creado exitosamente", content = @Content(schema = @Schema(implementation = Modulo.class)))
     @ApiResponse(responseCode = "404", description = "Error en los datos enviados", content = @Content)
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('INSTRUCTOR')")
     @PostMapping("/modulos")
     public ResponseEntity<?> crearModulo(@RequestHeader("Authorization") String authHeader, @RequestBody Modulo modulo){
         try {
@@ -187,6 +190,7 @@ public class CourseController {
     @Operation(summary = "Crear un nuevo contenido", description = "Registra un nuevo contenido dentro de un módulo.")
     @ApiResponse(responseCode = "201", description = "Contenido creado exitosamente", content = @Content(schema = @Schema(implementation = Contenido.class)))
     @ApiResponse(responseCode = "404", description = "Error en los datos enviados", content = @Content)
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('INSTRUCTOR')")
     @PostMapping("/contenidos")
     public ResponseEntity<?> crearContenido(
             @RequestHeader("Authorization") String authHeader,
@@ -212,6 +216,7 @@ public class CourseController {
     @Operation(summary = "Actualizar curso", description = "Actualiza los datos de un curso dado su ID.")
     @ApiResponse(responseCode = "200", description = "Curso actualizado exitosamente", content = @Content(schema = @Schema(implementation = Course.class)))
     @ApiResponse(responseCode = "404", description = "Curso no encontrado", content = @Content)
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('INSTRUCTOR')")
     @PutMapping("/cursos/{id}")
     public ResponseEntity<?> actualizarCourse(
         @RequestHeader("Authorization") String authHeader,
@@ -241,6 +246,7 @@ public class CourseController {
     @Operation(summary = "Actualizar módulo", description = "Actualiza los datos de un módulo dado su ID.")
     @ApiResponse(responseCode = "200", description = "Módulo actualizado exitosamente", content = @Content(schema = @Schema(implementation = Modulo.class)))
     @ApiResponse(responseCode = "404", description = "Módulo no encontrado", content = @Content)
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('INSTRUCTOR')")
     @PutMapping("/modulos/{id}")
     public ResponseEntity<?> actualizarModulo(
         @RequestHeader("Authorization") String authHeader,
@@ -269,6 +275,7 @@ public class CourseController {
     @Operation(summary = "Actualizar contenido", description = "Actualiza los datos de un contenido dado su ID.")
     @ApiResponse(responseCode = "200", description = "Contenido actualizado exitosamente", content = @Content(schema = @Schema(implementation = Contenido.class)))
     @ApiResponse(responseCode = "404", description = "Contenido no encontrado", content = @Content)
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('INSTRUCTOR')")
     @PutMapping("/contenidos/{id}")
     public ResponseEntity<?> actualizarContenido(
         @RequestHeader("Authorization") String authHeader,
@@ -295,6 +302,7 @@ public class CourseController {
     @Operation(summary = "Eliminar un curso", description = "Elimina un curso según el ID proporcionado.")
     @ApiResponse(responseCode = "200", description = "Curso eliminado correctamente", content = @Content)
     @ApiResponse(responseCode = "404", description = "Curso no encontrado", content = @Content)
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('INSTRUCTOR')")
     @DeleteMapping("/cursos/{id}")
     public ResponseEntity<?> eliminarCourse(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
         try {
@@ -309,6 +317,7 @@ public class CourseController {
     @Operation(summary = "Eliminar un módulo", description = "Elimina un módulo según el ID proporcionado.")
     @ApiResponse(responseCode = "200", description = "Módulo eliminado correctamente", content = @Content)
     @ApiResponse(responseCode = "404", description = "Módulo no encontrado", content = @Content)
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('INSTRUCTOR')")
     @DeleteMapping("/modulos/{id}")
     public ResponseEntity<?> eliminarModulo(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
         try {
@@ -326,6 +335,7 @@ public class CourseController {
     @Operation(summary = "Eliminar un contenido", description = "Elimina un contenido según el ID proporcionado.")
     @ApiResponse(responseCode = "200", description = "Contenido eliminado correctamente", content = @Content)
     @ApiResponse(responseCode = "404", description = "Contenido no encontrado", content = @Content)
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('INSTRUCTOR')")
     @DeleteMapping("/contenidos/{id}")
     public ResponseEntity<?> eliminarContenido(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
         try {

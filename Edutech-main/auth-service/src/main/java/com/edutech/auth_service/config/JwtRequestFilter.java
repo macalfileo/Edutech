@@ -32,7 +32,6 @@ protected void doFilterInternal(
 
     String path = request.getServletPath();
 
-    // ✅ NO aplicar filtro JWT al login
     if (path.contains("/auth/login")) {
         chain.doFilter(request, response);
         return;

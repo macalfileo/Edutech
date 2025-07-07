@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -50,9 +51,12 @@ public class EnrollmentControllerTest {
         Enrollment entrada = new Enrollment(null, 12L, 102L, null, "ACTIVO", 0, null, false);
         Enrollment salida = new Enrollment(3L, 12L, 102L, LocalDateTime.now(), "ACTIVO", 0, null, false);
 
-        when(enrollmentService.crearEnrollment(any(Enrollment.class))).thenReturn(salida);
+        String authHeader = "Bearer fake-jwt-token";
+
+        when(enrollmentService.crearEnrollment(any(Enrollment.class), eq(authHeader))).thenReturn(salida);
 
         mockMvc.perform(post("/api/v1/enrollments")
+               .header("Authorization", authHeader) // <- Simula el header
                .contentType(MediaType.APPLICATION_JSON)
                .content(new ObjectMapper().writeValueAsString(entrada)))
                .andExpect(status().isCreated())

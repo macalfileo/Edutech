@@ -2,6 +2,8 @@ package com.edutech.enrollment_service.service;
 
 import com.edutech.enrollment_service.model.Enrollment;
 import com.edutech.enrollment_service.repository.EnrollmentRepository;
+import com.edutech.enrollment_service.webclient.AuthClient;
+import com.edutech.enrollment_service.webclient.CourseClient;
 
 import jakarta.transaction.Transactional;
 
@@ -17,6 +19,12 @@ public class EnrollmentService {
 
     @Autowired
     private EnrollmentRepository enrollmentRepository;
+
+    @Autowired
+    private AuthClient authClient;
+
+    @Autowired
+    private CourseClient courseClient;
 
     // Obtener todas las inscripciones
     public List<Enrollment> obtenerEnrollments() {
@@ -40,7 +48,7 @@ public class EnrollmentService {
     }
 
     // Crear nueva inscripción
-    public Enrollment crearEnrollment(Enrollment enrollment) {
+    public Enrollment crearEnrollment(Enrollment enrollment, String authHeader) {
         if (enrollment.getUserId() == null || enrollment.getCourseId() == null) {
             throw new RuntimeException("El ID del usuario y del curso son obligatorios");
         }
@@ -48,6 +56,14 @@ public class EnrollmentService {
         if (enrollmentRepository.existsByUserIdAndCourseId(enrollment.getUserId(), enrollment.getCourseId())) {
             throw new RuntimeException("El usuario ya está inscrito en este curso");
         }
+
+        if (!authClient.usuarioExiste(enrollment.getUserId(), authHeader)) {
+        throw new RuntimeException("El usuario no existe o no tiene permisos.");
+    }
+
+    if (!courseClient.cursoExiste(enrollment.getCourseId(), authHeader)) {
+        throw new RuntimeException("El curso no existe o no se puede acceder.");
+    }
 
         enrollment.setFechaInscripcion(LocalDateTime.now());
         enrollment.setEstado("ACTIVA");

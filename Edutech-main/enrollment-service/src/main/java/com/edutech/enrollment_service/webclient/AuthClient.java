@@ -15,10 +15,11 @@ public class AuthClient {
             .build();
     }
 
-    public boolean existeUsuario(Long userId) {
+    public boolean usuarioExiste(Long userId, String authHeader) {
         try {
             webClient.get()
                 .uri("/users/{id}", userId)
+                .header("Authorization", authHeader)
                 .retrieve()
                 .bodyToMono(Void.class)
                 .block();
