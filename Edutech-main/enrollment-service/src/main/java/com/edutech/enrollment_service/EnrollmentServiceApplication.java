@@ -8,5 +8,7 @@ public class EnrollmentServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(EnrollmentServiceApplication.class, args);
 
+        // http://localhost:8083/swagger-ui/index.html 
+        // Consola de Swagger para probar los endpoints
     }
 }

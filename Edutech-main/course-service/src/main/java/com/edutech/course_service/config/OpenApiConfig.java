@@ -1,4 +1,4 @@
-package com.edutech.auth_service.config;
+package com.edutech.course_service.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,9 +13,9 @@ public class OpenApiConfig {
     public OpenAPI apiInfo(){
         return new OpenAPI()
             .info(new Info()
-                    .title("EduTech Auth Service API")
+                    .title("EduTech Course Service API")
                     .version("1.0.0")
-                    .description("Microservicio de autenticación, registro y gestión de usuarios/roles para EduTech.")
+                    .description("Microservicio para la creación, edición y gestión de cursos, módulos y contenidos de la plataforma EduTech.")
             
         );
     }

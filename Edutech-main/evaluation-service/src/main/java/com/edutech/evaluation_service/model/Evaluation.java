@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -25,11 +26,17 @@ public class Evaluation {
     @Size(max = 100, message = "El título no puede tener más de 100 caracteres")
     @Column(name = "titulo", nullable = false, length = 100)
     @Schema(description = "Título de la evaluación", example = "Evaluación de Matemáticas")
-    private String title;
+    private String titulo;
+
+    @Schema(description = "ID del curso asociado a esta evaluación", example = "1")
+    @Column(name = "course_id", nullable = false)
+    @NotNull(message = "El ID del curso es obligatorio")
+    private Long courseId;
+
 
     @NotBlank(message = "La descripción no puede estar vacía")
     @Size(max = 500, message = "La descripción no puede tener más de 500 caracteres")
     @Column(name = "descripcion", nullable = false, length = 500)
     @Schema(description = "Descripción detallada de la evaluación", example = "Esta es una evaluación que cubre temas de álgebra y geometría.")
-    private String description;
+    private String descripcion;
 }

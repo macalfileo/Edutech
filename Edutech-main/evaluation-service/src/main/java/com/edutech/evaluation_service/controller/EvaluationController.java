@@ -2,12 +2,16 @@ package com.edutech.evaluation_service.controller;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,20 +29,27 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 @RequestMapping("/api/evaluaciones")
 public class EvaluationController {
 
-    private final EvaluationService evaluationService;
+    @Autowired
+    private EvaluationService evaluationService;
 
     public EvaluationController(EvaluationService evaluationService) {
         this.evaluationService = evaluationService;
     }
 
     //Crear evaluación
-    @Operation(summary = "Crear evaluación", description = "Crea una nueva evaluación para un curso o estudiante.")
-    @ApiResponse(responseCode = "200", description = "Evaluación creada exitosamente", content = @Content(schema = @Schema(implementation = Evaluation.class)))
-    @ApiResponse(responseCode = "400", description = "Datos inválidos proporcionados", content = @Content(schema = @Schema(implementation = String.class)))
+    @Operation(summary = "Crear evaluación", description = "Crea una nueva evaluación.")
+    @ApiResponse(responseCode = "201", description = "Evaluación creada", content = @Content(schema = @Schema(implementation = Evaluation.class)))
+    @ApiResponse(responseCode = "400", description = "Datos inválidos", content = @Content(schema = @Schema(implementation = String.class)))
+    @ApiResponse(responseCode = "403", description = "Acceso denegado", content = @Content)
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('INSTRUCTOR')")
     @PostMapping
-    public ResponseEntity<Evaluation> crear(@RequestBody Evaluation evaluacion) {
-        Evaluation nueva = evaluationService.crearEvaluacion(evaluacion);
-        return ResponseEntity.ok(nueva);
+    public ResponseEntity<?> crear(@RequestBody Evaluation evaluacion, @RequestHeader("Authorization") String token) {
+        try {
+            Evaluation nueva = evaluationService.crearEvaluacion(evaluacion, token);
+            return ResponseEntity.status(HttpStatus.CREATED).body(nueva);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     //Obtener por ID
@@ -53,36 +64,58 @@ public class EvaluationController {
     }
 
      //Listar todas
-     @Operation(summary = "Listar todas las evaluaciones", description = "Devuelve una lista de todas las evaluaciones.")
+    @Operation(summary = "Listar todas las evaluaciones", description = "Devuelve una lista de todas las evaluaciones.")
     @ApiResponse(responseCode = "200", description = "Lista de evaluaciones obtenida exitosamente", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Evaluation.class))))
     @GetMapping
-    public List<Evaluation> listar() {
-        return evaluationService.listarEvaluaciones();
+    public ResponseEntity<List<Evaluation>> listar() {
+        List<Evaluation> evaluaciones = evaluationService.listarEvaluaciones();
+        return ResponseEntity.ok(evaluaciones);
     }
 
     //Actualizar evaluación
     @Operation(summary = "Actualizar evaluación", description = "Actualiza los detalles de una evaluación específica.")
-    @ApiResponse(responseCode = "200", description = "Evaluación actualizada exitosamente", content = @Content(schema = @Schema(implementation = Evaluation.class)))
-    @ApiResponse(responseCode = "404", description = "Evaluación no encontrada", content = @Content(schema = @Schema(implementation = String.class)))
+    @ApiResponse(responseCode = "200", description = "Evaluación actualizada", content = @Content(schema = @Schema(implementation = Evaluation.class)))
+    @ApiResponse(responseCode = "404", description = "Evaluación no encontrada", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Acceso denegado", content = @Content)
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('INSTRUCTOR')")
     @PutMapping("/{id}")
-    public ResponseEntity<Evaluation> actualizar(@PathVariable Long id, @RequestBody Evaluation evaluacion) {
-        return evaluationService.actualizarEvaluacion(id, evaluacion)
+    public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody Evaluation evaluacion, @RequestHeader("Authorization") String token) {
+        try {
+            return evaluationService.actualizarEvaluacion(id, evaluacion, token)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Evaluación no encontrada"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
         //Eliminar evaluación
-        @Operation(summary = "Eliminar evaluación", description = "Elimina una evaluación específica usando su ID.")
-    @ApiResponse(responseCode = "200", description = "Evaluación eliminada exitosamente", content = @Content)
-    @ApiResponse(responseCode = "404", description = "Evaluación no encontrada", content = @Content(schema = @Schema(implementation = String.class)))
+    @Operation(summary = "Eliminar evaluación", description = "Elimina una evaluación existente por ID.")
+    @ApiResponse(responseCode = "204", description = "Evaluación eliminada")
+    @ApiResponse(responseCode = "404", description = "Evaluación no encontrada", content = @Content)
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('INSTRUCTOR')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+    public ResponseEntity<?> eliminar(@PathVariable Long id) {
         if (evaluationService.eliminarEvaluacion(id)) {
             return ResponseEntity.noContent().build();
         }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Evaluación no encontrada");
     }
 
+    @Operation(summary = "Obtener evaluaciones por curso", description = "Devuelve todas las evaluaciones asociadas a un curso.")
+    @ApiResponse(responseCode = "200", description = "Evaluaciones encontradas", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Evaluation.class))))
+    @GetMapping("/curso/{courseId}")
+    public ResponseEntity<List<Evaluation>> obtenerPorCurso(@PathVariable Long courseId) {
+        return ResponseEntity.ok(evaluationService.obtenerPorCurso(courseId));
+    }
 
+    @Operation(summary = "Eliminar evaluaciones por curso", description = "Elimina todas las evaluaciones asociadas a un curso.")
+    @ApiResponse(responseCode = "200", description = "Evaluaciones eliminadas", content = @Content(schema = @Schema(implementation = String.class)))
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @DeleteMapping("/curso/{courseId}")
+    public ResponseEntity<String> eliminarPorCurso(@PathVariable Long courseId) {
+        evaluationService.eliminarPorCurso(courseId);
+        return ResponseEntity.ok("Evaluaciones eliminadas para el curso " + courseId);
+    }
 
 }
