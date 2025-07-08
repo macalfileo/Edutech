@@ -28,6 +28,10 @@ public class Evaluation {
     @Schema(description = "Título de la evaluación", example = "Evaluación de Matemáticas")
     private String titulo;
 
+    @NotNull(message = "El ID del usuario es obligatorio")
+    @Schema(description = "ID del usuario inscrito", example = "100")
+    private Long userId;
+
     @Schema(description = "ID del curso asociado a esta evaluación", example = "1")
     @Column(name = "course_id", nullable = false)
     @NotNull(message = "El ID del curso es obligatorio")

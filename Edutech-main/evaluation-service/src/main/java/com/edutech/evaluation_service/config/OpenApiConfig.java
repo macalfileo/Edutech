@@ -15,7 +15,7 @@ public class OpenApiConfig {
             .info(new Info()
                     .title("EduTech Evaluation Service API")
                     .version("1.0.0")
-                    .description("Microservicio para la creación, edición y gestión de cursos, módulos y contenidos de la plataforma EduTech.")
+                    .description("Microservicio para la creación, edición y gestión de evaluaciones asociadas a los cursos de la plataforma EduTech.")
             
         );
     }

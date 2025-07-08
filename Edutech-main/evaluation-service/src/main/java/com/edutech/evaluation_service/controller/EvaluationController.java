@@ -82,8 +82,8 @@ public class EvaluationController {
     public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody Evaluation evaluacion, @RequestHeader("Authorization") String token) {
         try {
             return evaluationService.actualizarEvaluacion(id, evaluacion, token)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Evaluación no encontrada"));
+        .map(ResponseEntity::ok)
+        .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -106,7 +106,7 @@ public class EvaluationController {
     @ApiResponse(responseCode = "200", description = "Evaluaciones encontradas", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Evaluation.class))))
     @GetMapping("/curso/{courseId}")
     public ResponseEntity<List<Evaluation>> obtenerPorCurso(@PathVariable Long courseId) {
-        return ResponseEntity.ok(evaluationService.obtenerPorCurso(courseId));
+        return ResponseEntity.ok(evaluationService.listarEvaluacionesPorCurso(courseId));
     }
 
     @Operation(summary = "Eliminar evaluaciones por curso", description = "Elimina todas las evaluaciones asociadas a un curso.")
@@ -114,7 +114,7 @@ public class EvaluationController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @DeleteMapping("/curso/{courseId}")
     public ResponseEntity<String> eliminarPorCurso(@PathVariable Long courseId) {
-        evaluationService.eliminarPorCurso(courseId);
+        evaluationService.eliminarEvaluacionesPorCurso(courseId);
         return ResponseEntity.ok("Evaluaciones eliminadas para el curso " + courseId);
     }
 

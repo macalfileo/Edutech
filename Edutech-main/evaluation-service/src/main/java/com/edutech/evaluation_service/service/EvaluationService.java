@@ -32,8 +32,20 @@ public class EvaluationService {
 
     // Crear nueva evaluación
     public Evaluation crearEvaluacion(Evaluation evaluacion, String authHeader) {
+        if (!authClient.usuarioPuedeCrearEvaluacion(authHeader)) {
+            throw new RuntimeException("No tienes permiso para crear evaluaciones.");
+        }
+
+        if (!authClient.usuarioExiste(evaluacion.getUserId(), authHeader)) {
+            throw new RuntimeException("Usuario no válido o no encontrado.");
+        }
+
         if (!courseClient.cursoExiste(evaluacion.getCourseId(), authHeader)) {
             throw new RuntimeException("El curso no existe o no se puede acceder.");
+        }
+
+        if (!enrollmentClient.tieneInscripciones(evaluacion.getCourseId())) {
+            throw new RuntimeException("No hay estudiantes inscritos en este curso.");
         }
         return evaluationRepository.save(evaluacion);
     }

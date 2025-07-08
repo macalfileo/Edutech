@@ -26,7 +26,9 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
                     "/swagger-ui.html",
-                    "/api/evaluaciones"      
+                    "/api/evaluaciones",
+                    "/api/evaluaciones/{id}",
+                    "/api/evaluaciones/curso/**"     
                 ).permitAll() // Permite acceso a Swagger y documentación de la API
                 .anyRequest().authenticated() // Requiere autenticación para cualquier otra solicitud
             )
