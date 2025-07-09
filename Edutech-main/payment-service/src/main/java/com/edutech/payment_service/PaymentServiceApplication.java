@@ -7,7 +7,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class PaymentServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(PaymentServiceApplication.class, args);
-
+        // http://localhost:8088/swagger-ui/index.html 
+        // Consola de Swagger para probar los endpoints
 
     }
 }

@@ -25,6 +25,16 @@ public class Payment  {
     @Schema(description = "ID único del pago", example = "1")
     private Long id;
 
+    @NotNull(message = "El ID del usuario es obligatorio")
+    @Column(name = "user_id", nullable = false)
+    @Schema(description = "ID del usuario que realiza el pago", example = "1")
+    private Long userId;
+
+    @NotNull(message = "El ID de la inscripción es obligatorio")
+    @Column(name = "enrollment_id", nullable = false)
+    @Schema(description = "ID de la inscripción asociada al pago", example = "5")
+    private Long enrollmentId;
+
     @NotBlank(message = "El nombre del usuario es obligatorio")
     @Size(max = 100)
     @Column(name = "usuario", nullable = false)
@@ -50,14 +60,4 @@ public class Payment  {
     @Column(name = "fecha_pago", nullable = false)
     @Schema(description = "Fecha y hora en que se realizó el pago", example = "2025-06-24T12:34:00")
     private LocalDateTime fechaPago = LocalDateTime.now();
-
-    public void setUser(String string) {
-  
-        throw new UnsupportedOperationException("Unimplemented method 'setUser'");
-    }
-
-    public void setAmount(int i) {
-
-        throw new UnsupportedOperationException("Unimplemented method 'setAmount'");
-    }
 }

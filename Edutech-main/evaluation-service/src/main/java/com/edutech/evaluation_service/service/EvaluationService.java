@@ -26,10 +26,6 @@ public class EvaluationService {
     @Autowired
     private EnrollmentClient enrollmentClient;
 
-    public EvaluationService(EvaluationRepository evaluationRepository) {
-        this.evaluationRepository = evaluationRepository;
-    }
-
     // Crear nueva evaluación
     public Evaluation crearEvaluacion(Evaluation evaluacion, String authHeader) {
         if (!authClient.usuarioPuedeCrearEvaluacion(authHeader)) {

@@ -2,6 +2,10 @@ package com.edutech.payment_service.service;
 
 import com.edutech.payment_service.model.Payment;
 import com.edutech.payment_service.repository.PaymentRepository;
+import com.edutech.payment_service.webclient.AuthClient;
+import com.edutech.payment_service.webclient.EnrollmentClient;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,58 +14,67 @@ import java.util.Optional;
 @Service
 public class PaymentService {
 
-    private final PaymentRepository paymentRepository;
+    @Autowired
+    private PaymentRepository paymentRepository;
 
-    public PaymentService(PaymentRepository paymentRepository){
-        this.paymentRepository = paymentRepository;
-    }
+    @Autowired
+    private AuthClient authClient;
+
+    @Autowired
+    private EnrollmentClient enrollmentClient;
+
     //Crear un nuevo pago
-    public Payment CrearPago(Payment pago){
+    public Payment crearPago(Payment pago, String authHeader) {
+        // Validar existencia de usuario
+        if (!authClient.usuarioExiste(pago.getUserId(), authHeader)) {
+            throw new RuntimeException("El usuario no existe o no tiene permisos.");
+        }
+
+        // Validar existencia de inscripción
+        if (!enrollmentClient.inscripcionExiste(pago.getEnrollmentId(), authHeader)) {
+            throw new RuntimeException("La inscripción no existe.");
+        }
+
         return paymentRepository.save(pago);
     }
+
+    // Obtener todos los pagos
+    public List<Payment> obtenerPagos() {
+        return paymentRepository.findAll();
+    }
+
     // Obtener pago por ID
     public Optional<Payment> obtenerPagoPorId(Long id) {
         return paymentRepository.findById(id);
     }
-    
-    //Listar todos los pagos
-    public List<Payment> listarPagos() {
-        return paymentRepository.findAll();
+
+    // Obtener pagos por usuario
+    public List<Payment> obtenerPorUsuario(Long userId) {
+        return paymentRepository.findByUserId(userId);
+    }
+
+    // Obtener pagos por inscripción
+    public List<Payment> obtenerPorInscripcion(Long enrollmentId) {
+        return paymentRepository.findByEnrollmentId(enrollmentId);
     }
 
      //Actualizar pago existente
-    public Optional<Payment> actualizarPago(Long id, Payment nuevoPago) {
-        return paymentRepository.findById(id).map(pagoExistente -> {
-            pagoExistente.setUsuario(nuevoPago.getUsuario());
-            pagoExistente.setMonto(nuevoPago.getMonto());
-            pagoExistente.setMetodoPago(nuevoPago.getMetodoPago());
-            pagoExistente.setEstado(nuevoPago.getEstado());
-            pagoExistente.setFechaPago(nuevoPago.getFechaPago());
-            return paymentRepository.save(pagoExistente);
+    public Optional<Payment> actualizarEstado(Long id, Payment pago) {
+        return paymentRepository.findById(id).map(p -> {
+            p.setEstado(pago.getEstado()); // Solo actualiza el estado
+            return paymentRepository.save(p);
         });
     }
-
-    
+ 
     //Eliminar pago por ID
-    public boolean eliminarPago(Long id) {
+    public void eliminarPago(Long id) {
         if (paymentRepository.existsById(id)) {
             paymentRepository.deleteById(id);
-            return true;
+        } else {
+            throw new RuntimeException("Pago no encontrado");
         }
-        return false;
     }
-    public Object getAllPayments() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getAllPayments'");
-    }
-    public void processPayment(Payment payment) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'processPayment'");
-    }
-    public Payment crearPago(Payment pago) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'crearPago'");
-    }
+
 
 
 }
