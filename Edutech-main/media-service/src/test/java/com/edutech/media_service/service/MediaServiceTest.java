@@ -2,15 +2,16 @@ package com.edutech.media_service.service;
 
 import com.edutech.media_service.model.MediaFile;
 import com.edutech.media_service.repository.MediaFileRepository;
+import com.edutech.media_service.webclient.CourseClient;
+import com.edutech.media_service.webclient.EvaluationClient;
+import com.edutech.media_service.webclient.UserProfileClient;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.mock.web.MockMultipartFile;
-
-import java.io.IOException;
-import java.util.Arrays;
+import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,109 +19,102 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 public class MediaServiceTest {
 
-    @InjectMocks
-    private MediaService mediaService;
+    @Mock private MediaFileRepository mediaFileRepository;
+    @Mock private CourseClient courseClient;
+    @Mock private EvaluationClient evaluationClient;
+    @Mock private UserProfileClient userProfileClient;
 
-    @Mock
-    private MediaFileRepository mediaFileRepository;
+    @InjectMocks private MediaService mediaService;
+
+    private MediaFile archivo;
 
     @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
+    void setup() {
+        archivo = new MediaFile();
+        archivo.setId(1L);
+        archivo.setNombreArchivo("archivo.jpg");
+        archivo.setTipoArchivo("image/jpeg");
+        archivo.setContenido("contenido".getBytes());
+        archivo.setOrigen("CURSO");
+        archivo.setCourseId(2L);
     }
 
     @Test
-    void testGuardarArchivo() throws IOException {
-        MockMultipartFile archivo = new MockMultipartFile("file", "test.txt", "text/plain", "contenido".getBytes());
-        MediaFile media = new MediaFile();
-        media.setNombreArchivo("test.txt");
-        media.setTipoArchivo("text/plain");
-        media.setContenido("contenido".getBytes());
+    void guardarArchivo_origenCurso_valido() {
+        when(courseClient.cursoExiste(2L, "token")).thenReturn(true);
+        when(mediaFileRepository.save(any())).thenReturn(archivo);
 
-        when(mediaFileRepository.save(any())).thenReturn(media);
-
-        MediaFile guardado = mediaService.guardarArchivo(archivo);
-
-        assertNotNull(guardado);
-        assertEquals("test.txt", guardado.getNombreArchivo());
-        verify(mediaFileRepository).save(any());
+        MediaFile resultado = mediaService.guardarArchivo(archivo, "token");
+        assertEquals("archivo.jpg", resultado.getNombreArchivo());
     }
 
     @Test
-    void testListarArchivos() {
-        MediaFile mediaFile1 = new MediaFile();
-        mediaFile1.setId(1L);
-        mediaFile1.setNombreArchivo("a.png");
-        mediaFile1.setTipoArchivo("image/png");
-        mediaFile1.setContenido(new byte[]{});
+    void guardarArchivo_origenCurso_invalido() {
+        archivo.setCourseId(999L);
+        when(courseClient.cursoExiste(999L, "token")).thenReturn(false);
 
-        MediaFile mediaFile2 = new MediaFile();
-        mediaFile2.setId(2L);
-        mediaFile2.setNombreArchivo("b.jpg");
-        mediaFile2.setTipoArchivo("image/jpeg");
-        mediaFile2.setContenido(new byte[]{});
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            mediaService.guardarArchivo(archivo, "token");
+        });
 
-        List<MediaFile> lista = Arrays.asList(
-                mediaFile1,
-                mediaFile2
-        );
-        when(mediaFileRepository.findAll()).thenReturn(lista);
-
-        List<MediaFile> resultado = mediaService.listarArchivos();
-
-        assertEquals(2, resultado.size());
-        verify(mediaFileRepository).findAll();
+        assertEquals("Curso no válido o no existe.", ex.getMessage());
     }
 
     @Test
-    void testActualizarArchivoExistente() throws IOException {
-        MediaFile existente = new MediaFile();
-        existente.setId(1L);
-        existente.setNombreArchivo("viejo.txt");
-        existente.setTipoArchivo("text/plain");
-        existente.setContenido("abc".getBytes());
-        MockMultipartFile nuevoArchivo = new MockMultipartFile("file", "nuevo.txt", "text/plain", "nuevo".getBytes());
-
-        when(mediaFileRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(mediaFileRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        MediaFile actualizado = mediaService.actualizarArchivo(1L, nuevoArchivo);
-
-        assertNotNull(actualizado);
-        assertEquals("nuevo.txt", actualizado.getNombreArchivo());
-        assertArrayEquals("nuevo".getBytes(), actualizado.getContenido());
+    void obtenerPorId_existente() {
+        when(mediaFileRepository.findById(1L)).thenReturn(Optional.of(archivo));
+        Optional<MediaFile> resultado = mediaService.obtenerPorId(1L);
+        assertTrue(resultado.isPresent());
     }
 
     @Test
-    void testActualizarArchivoInexistente() throws IOException {
-        MockMultipartFile nuevoArchivo = new MockMultipartFile("file", "nuevo.txt", "text/plain", "nuevo".getBytes());
-
-        when(mediaFileRepository.findById(99L)).thenReturn(Optional.empty());
-
-        MediaFile resultado = mediaService.actualizarArchivo(99L, nuevoArchivo);
-
-        assertNull(resultado);
+    void listarTodos_returnLista() {
+        when(mediaFileRepository.findAll()).thenReturn(List.of(archivo));
+        List<MediaFile> lista = mediaService.listarTodos();
+        assertEquals(1, lista.size());
     }
 
     @Test
-    void testEliminarArchivoExistente() {
+    void eliminarPorId_existe() {
         when(mediaFileRepository.existsById(1L)).thenReturn(true);
-
-        boolean resultado = mediaService.eliminarArchivo(1L);
-
-        assertTrue(resultado);
+        assertDoesNotThrow(() -> mediaService.eliminarPorId(1L));
         verify(mediaFileRepository).deleteById(1L);
     }
 
     @Test
-    void testEliminarArchivoInexistente() {
-        when(mediaFileRepository.existsById(99L)).thenReturn(false);
+    void eliminarPorId_noExiste() {
+        when(mediaFileRepository.existsById(2L)).thenReturn(false);
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            mediaService.eliminarPorId(2L);
+        });
+        assertEquals("Archivo no encontrado", ex.getMessage());
+    }
 
-        boolean resultado = mediaService.eliminarArchivo(99L);
+    @Test
+    void obtenerPorCurso_returnLista() {
+        when(mediaFileRepository.findByCourseId(2L)).thenReturn(List.of(archivo));
+        List<MediaFile> lista = mediaService.obtenerPorCurso(2L);
+        assertEquals(1, lista.size());
+    }
 
-        assertFalse(resultado);
-        verify(mediaFileRepository, never()).deleteById(any());
+    @Test
+    void obtenerPorEvaluacion_returnLista() {
+        archivo.setOrigen("EVALUACION");
+        archivo.setEvaluationId(5L);
+        when(mediaFileRepository.findByEvaluationId(5L)).thenReturn(List.of(archivo));
+        List<MediaFile> lista = mediaService.obtenerPorEvaluacion(5L);
+        assertEquals(1, lista.size());
+    }
+
+    @Test
+    void obtenerPorUsuario_returnLista() {
+        archivo.setOrigen("USUARIO");
+        archivo.setUserId(10L);
+        when(mediaFileRepository.findByUserId(10L)).thenReturn(List.of(archivo));
+        List<MediaFile> lista = mediaService.obtenerPorUsuario(10L);
+        assertEquals(1, lista.size());
     }
 }

@@ -2,52 +2,75 @@ package com.edutech.media_service.service;
 
 import com.edutech.media_service.model.MediaFile;
 import com.edutech.media_service.repository.MediaFileRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import com.edutech.media_service.webclient.CourseClient;
+import com.edutech.media_service.webclient.EvaluationClient;
+import com.edutech.media_service.webclient.UserProfileClient;
 
-import java.io.IOException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class MediaService {
     
-    private final MediaFileRepository mediaFileRepository;
+    @Autowired
+    private MediaFileRepository mediaFileRepository;
 
-    public MediaService(MediaFileRepository mediaFileRepository) {
-        this.mediaFileRepository = mediaFileRepository;
+    @Autowired
+    private CourseClient courseClient;
+
+    @Autowired
+    private EvaluationClient evaluationClient;
+
+    @Autowired
+    private UserProfileClient userProfileClient;
+
+    // Crear y validar archivo
+    public MediaFile guardarArchivo(MediaFile archivo, String authHeader) {
+        if (archivo.getOrigen().equalsIgnoreCase("CURSO")) {
+            if (archivo.getCourseId() == null || !courseClient.cursoExiste(archivo.getCourseId(), authHeader)) {
+                throw new RuntimeException("Curso no válido o no existe.");
+            }
+        } else if (archivo.getOrigen().equalsIgnoreCase("EVALUACION")) {
+            if (archivo.getEvaluationId() == null || !evaluationClient.evaluacionExiste(archivo.getEvaluationId(), authHeader)) {
+                throw new RuntimeException("Evaluación no válida o no existe.");
+            }
+        } else if (archivo.getOrigen().equalsIgnoreCase("USUARIO")) {
+            if (archivo.getUserId() == null || !userProfileClient.usuarioExiste(archivo.getUserId(), authHeader)) {
+                throw new RuntimeException("Usuario no válido o no existe.");
+            }
+        } else {
+            throw new RuntimeException("Origen inválido. Debe ser CURSO, EVALUACION o USUARIO.");
+        }
+
+        return mediaFileRepository.save(archivo);
     }
 
-    public MediaFile guardarArchivo(MultipartFile archivo) throws IOException {
-        MediaFile media = new MediaFile();
-        media.setNombreArchivo(archivo.getOriginalFilename());
-        media.setTipoArchivo(archivo.getContentType());
-        media.setContenido(archivo.getBytes());
-        return mediaFileRepository.save(media);
+    public Optional<MediaFile> obtenerPorId(Long id) {
+        return mediaFileRepository.findById(id);
     }
 
-    public List<MediaFile> listarArchivos() {
+    public List<MediaFile> listarTodos() {
         return mediaFileRepository.findAll();
     }
 
-     public MediaFile actualizarArchivo(Long id, MultipartFile nuevoArchivo) throws IOException {
-        MediaFile existente = mediaFileRepository.findById(id).orElse(null);
-        if (existente == null) {
-            return null;
+    public void eliminarPorId(Long id) {
+        if (!mediaFileRepository.existsById(id)) {
+            throw new RuntimeException("Archivo no encontrado");
         }
-
-        existente.setNombreArchivo(nuevoArchivo.getOriginalFilename());
-        existente.setTipoArchivo(nuevoArchivo.getContentType());
-        existente.setContenido(nuevoArchivo.getBytes());
-
-        return mediaFileRepository.save(existente);
+        mediaFileRepository.deleteById(id);
     }
 
-    public boolean eliminarArchivo(Long id) {
-        if (mediaFileRepository.existsById(id)) {
-            mediaFileRepository.deleteById(id);
-            return true;
-        }
-        return false;
+    public List<MediaFile> obtenerPorCurso(Long courseId) {
+        return mediaFileRepository.findByCourseId(courseId);
     }
 
+    public List<MediaFile> obtenerPorEvaluacion(Long evaluationId) {
+        return mediaFileRepository.findByEvaluationId(evaluationId);
+    }
+
+    public List<MediaFile> obtenerPorUsuario(Long userId) {
+        return mediaFileRepository.findByUserId(userId);
+    }
 }

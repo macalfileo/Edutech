@@ -41,35 +41,18 @@ public class MediaFile {
     @Schema(description = "Contenido del archivo multimedia en formato binario", example = "contenido binario del archivo")
     private byte[] contenido;
 
-    public void setFilename(String string) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setFilename'");
-    }
+    @Schema(description = "ID de curso asociado (si aplica)", example = "2")
+    private Long courseId;
 
-    public void setType(String string) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setType'");
-    }
+    @Schema(description = "ID de evaluación asociada (si aplica)", example = "5")
+    private Long evaluationId;
 
-    public String getFilename() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getFilename'");
-    }
+    @Schema(description = "ID del usuario que subió el archivo (si aplica)", example = "10")
+    private Long userId;
 
-    public String getType() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getType'");
-    }
-
-    public Object getUsuarioId() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getUsuarioId'");
-    }
-
-    public Object getCursoId() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getCursoId'");
-    }
- 
+    @NotBlank
+    @Column(name = "origen", nullable = false)
+    @Schema(description = "Origen del archivo: puede ser 'CURSO', 'EVALUACION' o 'USUARIO'", example = "CURSO")
+    private String origen;
 
 }
