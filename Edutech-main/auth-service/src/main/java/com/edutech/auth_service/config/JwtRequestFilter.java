@@ -25,10 +25,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     private org.springframework.security.core.userdetails.UserDetailsService userDetailsService;
 
     @Override
-protected void doFilterInternal(
-        HttpServletRequest request,
-        HttpServletResponse response,
-        FilterChain chain) throws ServletException, IOException {
+    protected void doFilterInternal(@org.springframework.lang.NonNull HttpServletRequest request, @org.springframework.lang.NonNull HttpServletResponse response, @org.springframework.lang.NonNull FilterChain chain)
+            throws ServletException, IOException {
 
     String path = request.getServletPath();
 
