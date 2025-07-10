@@ -34,7 +34,7 @@ public class ReportService {
             throw new RuntimeException("El ID del usuario es obligatorio.");
         }
 
-        if (!authClient.usuarioExiste(reporte.getUsuarioId())) {
+        if (!authClient.usuarioExiste(reporte.getUserId())) {
             throw new RuntimeException("El usuario no existe.");
         }
 
