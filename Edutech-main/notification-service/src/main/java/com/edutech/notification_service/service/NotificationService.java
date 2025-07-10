@@ -2,62 +2,69 @@ package com.edutech.notification_service.service;
 
 import com.edutech.notification_service.model.Notification;
 import com.edutech.notification_service.repository.NotificationRepository;
+import com.edutech.notification_service.webclient.AuthClient;
+
+import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-@Service // componente d servicio de spring
-@Transactional //para manejar operaciones atomicas 
-
+@Service
+@Transactional
 public class NotificationService {
 
     @Autowired
     private NotificationRepository notificationRepository;
 
-    public Notification enviarNotificacion(Notification notification){
-        if (notification.getMensaje()== null || notification.getMensaje().trim().isEmpty()){
-            throw new RuntimeException("El mensaje de la notificación no puede estar vacío");     
-        }
-        return  notificationRepository.save(notification);
-
-    }
+    @Autowired
+    private AuthClient authClient;
 
     public List<Notification> obtenerTodas() {
         return notificationRepository.findAll();
     }
 
-    public Notification obtenerPorId(Long id){
+    public Notification obtenerPorId(Long id) {
         return notificationRepository.findById(id)
-                   .orElseThrow(() -> new RuntimeException("Notificación no encontrada con ID: " + id));
-
+                .orElseThrow(() -> new RuntimeException("Notificación no encontrada con ID: " + id));
     }
 
-    public String eliminarNotificacion(Long id){
-        Notification notificacion = notificationRepository.findById(id)
-                  .orElseThrow(() -> new RuntimeException("Notificación no encontrada con ID: " + id));
-         notificationRepository.delete(notificacion);
-         return "Notificación eliminada correctamente";
-                             
+    public List<Notification> obtenerPorUsuario(Long usuarioId) {
+        return notificationRepository.findByUsuarioId(usuarioId);
     }
 
-    public Notification actualizarNotificacion(Long id, String receptor, String mensaje ){
-        Notification notificacion = notificationRepository.findById(id)
-                  .orElseThrow(() -> new RuntimeException("Notificación no entrada con ID: " + id));
+    public List<Notification> obtenerNoLeidas(Long usuarioId) {
+        return notificationRepository.findByUsuarioIdAndLeidaFalse(usuarioId);
+    }
 
-        if (receptor != null && !receptor.trim().isEmpty()) {
-            notificacion.setReceptor(receptor);
-            
+    public Notification crear(String authHeader, String titulo, String mensaje, Long usuarioId, String tipo) {
+        if (titulo == null || mensaje == null || tipo == null || usuarioId == null) {
+            throw new RuntimeException("Todos los campos son obligatorios");
         }
-        if (mensaje != null && !mensaje.trim().isEmpty()){
-            notificacion.setMensaje(mensaje);
+
+        // Validar que el usuario existe (o tiene permisos válidos)
+        if (!authClient.usuarioExiste(authHeader, usuarioId)) {
+            throw new RuntimeException("Usuario destino no válido: " + usuarioId);
         }
-        
-        return notificationRepository.save(notificacion);
-                  
+
+        Notification noti = new Notification();
+        noti.setTitulo(titulo);
+        noti.setMensaje(mensaje);
+        noti.setUsuarioId(usuarioId);
+        noti.setTipo(tipo);
+
+        return notificationRepository.save(noti);
     }
 
+    public Notification marcarComoLeida(Long id) {
+        Notification noti = obtenerPorId(id);
+        noti.setLeida(true);
+        return notificationRepository.save(noti);
+    }
 
-
+    public String eliminar(Long id) {
+        Notification noti = obtenerPorId(id);
+        notificationRepository.delete(noti);
+        return "Notificación eliminada";
+    }
 }

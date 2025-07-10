@@ -2,143 +2,129 @@ package com.edutech.notification_service.service;
 
 import com.edutech.notification_service.model.Notification;
 import com.edutech.notification_service.repository.NotificationRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import com.edutech.notification_service.webclient.AuthClient;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class NotificationServiceTest {
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-    @InjectMocks
-    private NotificationService notificationService;
+import java.util.*;
+
+@ExtendWith(MockitoExtension.class)
+public class NotificationServiceTest {
 
     @Mock
     private NotificationRepository notificationRepository;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
+    @Mock
+    private AuthClient authClient;
+
+    @InjectMocks
+    private NotificationService notificationService;
+
+    @Test
+    void crearNotificacion_valida() {
+        Notification n = new Notification();
+        n.setTitulo("Nuevo curso");
+        n.setMensaje("Se ha publicado un nuevo curso");
+        n.setUsuarioId(10L);
+        n.setTipo("CURSO");
+
+        when(authClient.usuarioExiste("token123", 10L)).thenReturn(true);
+        when(notificationRepository.save(any(Notification.class))).thenReturn(n);
+
+        Notification result = notificationService.crear("token123", "Nuevo curso", "Se ha publicado un nuevo curso", 10L, "CURSO");
+
+        assertEquals("Nuevo curso", result.getTitulo());
+        assertEquals("CURSO", result.getTipo());
     }
 
     @Test
-    void testEnviarNotificacion_Valida() {
-        Notification notification = new Notification(null, "usuario@example.com", "Mensaje de prueba", null, null);
-        when(notificationRepository.save(any(Notification.class))).thenReturn(notification);
+    void crearNotificacion_usuarioInvalido() {
+        when(authClient.usuarioExiste("token123", 88L)).thenReturn(false);
 
-        Notification result = notificationService.enviarNotificacion(notification);
-
-        assertNotNull(result);
-        assertEquals("Mensaje de prueba", result.getMensaje());
-        verify(notificationRepository, times(1)).save(notification);
-    }
-
-    @Test
-    void testEnviarNotificacion_MensajeVacio() {
-        Notification notification = new Notification(null, "usuario@example.com", "   ", null, null);
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            notificationService.enviarNotificacion(notification);
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            notificationService.crear("token123", "Alerta", "Mensaje", 88L, "SISTEMA");
         });
-        assertEquals("El mensaje de la notificación no puede estar vacío", exception.getMessage());
-        verify(notificationRepository, never()).save(any());
+
+        assertEquals("Usuario destino no válido: 88", ex.getMessage());
     }
 
     @Test
-    void testObtenerTodas() {
-        List<Notification> lista = Arrays.asList(
-                new Notification(1L, "user1@example.com", "msg1", null, null),
-                new Notification(2L, "user2@example.com", "msg2", null, null)
-        );
-        when(notificationRepository.findAll()).thenReturn(lista);
+    void obtenerPorId_existe() {
+        Notification n = new Notification();
+        n.setId(1L);
+        when(notificationRepository.findById(1L)).thenReturn(Optional.of(n));
 
-        List<Notification> resultado = notificationService.obtenerTodas();
-
-        assertEquals(2, resultado.size());
-        verify(notificationRepository, times(1)).findAll();
+        Notification result = notificationService.obtenerPorId(1L);
+        assertEquals(1L, result.getId());
     }
 
     @Test
-    void testObtenerPorId_Existente() {
-        Notification noti = new Notification(1L, "user@example.com", "mensaje", null, null);
-        when(notificationRepository.findById(1L)).thenReturn(Optional.of(noti));
-
-        Notification resultado = notificationService.obtenerPorId(1L);
-
-        assertNotNull(resultado);
-        assertEquals("mensaje", resultado.getMensaje());
-    }
-
-    @Test
-    void testObtenerPorId_Inexistente() {
+    void obtenerPorId_noExiste() {
         when(notificationRepository.findById(99L)).thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
             notificationService.obtenerPorId(99L);
         });
-        assertTrue(ex.getMessage().contains("Notificación no encontrada"));
+
+        assertEquals("Notificación no encontrada con ID: 99", ex.getMessage());
     }
 
     @Test
-    void testEliminarNotificacion() {
-        Notification noti = new Notification(1L, "user@example.com", "mensaje", null, null);
-        when(notificationRepository.findById(1L)).thenReturn(Optional.of(noti));
+    void marcarComoLeida_actualizaEstado() {
+        Notification n = new Notification();
+        n.setId(1L);
+        n.setLeida(false);
 
-        String mensaje = notificationService.eliminarNotificacion(1L);
+        when(notificationRepository.findById(1L)).thenReturn(Optional.of(n));
+        when(notificationRepository.save(any(Notification.class))).thenReturn(n);
 
-        assertEquals("Notificación eliminada correctamente", mensaje);
-        verify(notificationRepository).delete(noti);
+        Notification result = notificationService.marcarComoLeida(1L);
+
+        assertTrue(result.isLeida());
     }
 
     @Test
-    void testEliminarNotificacion_Inexistente() {
-        when(notificationRepository.findById(99L)).thenReturn(Optional.empty());
+    void eliminar_existente() {
+        Notification n = new Notification();
+        n.setId(1L);
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            notificationService.eliminarNotificacion(99L);
-        });
-        assertTrue(ex.getMessage().contains("Notificación no encontrada"));
+        when(notificationRepository.findById(1L)).thenReturn(Optional.of(n));
+
+        String result = notificationService.eliminar(1L);
+
+        verify(notificationRepository).delete(n);
+        assertEquals("Notificación eliminada", result);
     }
 
     @Test
-    void testActualizarNotificacion() {
-        Notification noti = new Notification(1L, "user@example.com", "mensaje viejo", null, null);
-        when(notificationRepository.findById(1L)).thenReturn(Optional.of(noti));
-        when(notificationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+    void obtenerPorUsuario_devuelveLista() {
+        Notification n1 = new Notification();
+        Notification n2 = new Notification();
+        when(notificationRepository.findByUsuarioId(5L)).thenReturn(List.of(n1, n2));
 
-        Notification actualizada = notificationService.actualizarNotificacion(1L, "nuevo@receptor.com", "mensaje nuevo");
-
-        assertEquals("nuevo@receptor.com", actualizada.getReceptor());
-        assertEquals("mensaje nuevo", actualizada.getMensaje());
+        List<Notification> result = notificationService.obtenerPorUsuario(5L);
+        assertEquals(2, result.size());
     }
 
     @Test
-    void testActualizarNotificacion_SoloMensaje() {
-        Notification noti = new Notification(1L, "user@example.com", "mensaje viejo", null, null);
-        when(notificationRepository.findById(1L)).thenReturn(Optional.of(noti));
-        when(notificationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        Notification actualizada = notificationService.actualizarNotificacion(1L, null, "nuevo mensaje");
-
-        assertEquals("user@example.com", actualizada.getReceptor());
-        assertEquals("nuevo mensaje", actualizada.getMensaje());
+    void obtenerNoLeidas_devuelveLista() {
+        when(notificationRepository.findByUsuarioIdAndLeidaFalse(3L)).thenReturn(List.of(new Notification()));
+        List<Notification> result = notificationService.obtenerNoLeidas(3L);
+        assertEquals(1, result.size());
     }
 
     @Test
-    void testActualizarNotificacion_SoloReceptor() {
-        Notification noti = new Notification(1L, "user@example.com", "mensaje viejo", null, null);
-        when(notificationRepository.findById(1L)).thenReturn(Optional.of(noti));
-        when(notificationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        Notification actualizada = notificationService.actualizarNotificacion(1L, "nuevo@correo.com", null);
-
-        assertEquals("nuevo@correo.com", actualizada.getReceptor());
-        assertEquals("mensaje viejo", actualizada.getMensaje());
+    void obtenerTodas_devuelveListaCompleta() {
+        when(notificationRepository.findAll()).thenReturn(List.of(new Notification(), new Notification()));
+        List<Notification> result = notificationService.obtenerTodas();
+        assertEquals(2, result.size());
     }
 }
