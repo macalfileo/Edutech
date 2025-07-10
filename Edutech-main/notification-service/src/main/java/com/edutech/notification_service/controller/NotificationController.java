@@ -32,7 +32,7 @@ public class NotificationController {
     @PostMapping
     public ResponseEntity<?> crear(@RequestBody Notification noti, @RequestHeader("Authorization") String token) {
         try {
-            Notification nueva = notificationService.crear(token, noti.getTitulo(), noti.getMensaje(), noti.getUsuarioId(), noti.getTipo());
+            Notification nueva = notificationService.crear(token, noti.getTitulo(), noti.getMensaje(), noti.getUserId(), noti.getTipo());
             return ResponseEntity.status(HttpStatus.CREATED).body(nueva);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

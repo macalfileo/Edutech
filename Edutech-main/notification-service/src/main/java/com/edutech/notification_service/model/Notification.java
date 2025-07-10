@@ -40,7 +40,7 @@ public class Notification {
     @NotNull(message = "El ID del usuario es obligatorio")
     @Column(name = "usuario_id", nullable = false)
     @Schema(description = "ID del usuario que recibe la notificación", example = "15")
-    private Long usuarioId;
+    private Long userId;
 
     @NotBlank(message = "El tipo de notificación es obligatorio")
     @Column(name = "tipo", nullable = false)

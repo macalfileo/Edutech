@@ -41,7 +41,7 @@ public class NotificationControllerTest {
         Notification noti = new Notification();
         noti.setTitulo("Aviso");
         noti.setMensaje("Tienes una nueva tarea.");
-        noti.setUsuarioId(15L);
+        noti.setUserId(15L);
         noti.setTipo("EVALUACION");
 
         when(notificationService.crear(any(), any(), any(), any(), any())).thenReturn(noti);
@@ -57,7 +57,7 @@ public class NotificationControllerTest {
     @Test // Obtener por ID
     void obtenerPorId_existe() throws Exception {
         Notification n = new Notification();
-        n.setId(1L); n.setTitulo("Hola"); n.setMensaje("Mensaje"); n.setUsuarioId(10L);
+        n.setId(1L); n.setTitulo("Hola"); n.setMensaje("Mensaje"); n.setUserId(10L);
         when(notificationService.obtenerPorId(1L)).thenReturn(n);
 
         mockMvc.perform(get("/api/v1/notificaciones/1"))
@@ -68,7 +68,7 @@ public class NotificationControllerTest {
     @Test // Obtener por usuario
     void obtenerPorUsuario_retornaLista() throws Exception {
         Notification n = new Notification();
-        n.setUsuarioId(15L); n.setTitulo("Recordatorio");
+        n.setUserId(15L); n.setTitulo("Recordatorio");
         when(notificationService.obtenerPorUsuario(15L)).thenReturn(List.of(n));
 
         mockMvc.perform(get("/api/v1/notificaciones/usuario/15"))
@@ -79,7 +79,7 @@ public class NotificationControllerTest {
     @Test // No leídas por usuario
     void obtenerNoLeidas_retornaLista() throws Exception {
         Notification n = new Notification();
-        n.setUsuarioId(15L); n.setTitulo("Pendiente"); n.setLeida(false);
+        n.setUserId(15L); n.setTitulo("Pendiente"); n.setLeida(false);
         when(notificationService.obtenerNoLeidas(15L)).thenReturn(List.of(n));
 
         mockMvc.perform(get("/api/v1/notificaciones/usuario/15/no-leidas"))

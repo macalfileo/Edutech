@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import org.mockito.InjectMocks;
@@ -33,7 +34,7 @@ public class NotificationServiceTest {
         Notification n = new Notification();
         n.setTitulo("Nuevo curso");
         n.setMensaje("Se ha publicado un nuevo curso");
-        n.setUsuarioId(10L);
+        n.setUserId(10L);
         n.setTipo("CURSO");
 
         when(authClient.usuarioExiste("token123", 10L)).thenReturn(true);

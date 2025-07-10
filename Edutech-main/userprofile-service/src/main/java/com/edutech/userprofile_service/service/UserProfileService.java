@@ -1,9 +1,10 @@
 package com.edutech.userprofile_service.service;
 
-import com.edutech.userprofile_service.model.Genero;
 import com.edutech.userprofile_service.model.UserProfile;
 import com.edutech.userprofile_service.repository.UserProfileRepository;
 import com.edutech.userprofile_service.webclient.AuthClient;
+import com.edutech.userprofile_service.webclient.MediaClient;
+import com.edutech.userprofile_service.webclient.NotificationClient;
 
 import jakarta.transaction.Transactional;
 
@@ -21,6 +22,12 @@ public class UserProfileService {
 
     @Autowired
     private AuthClient authClient;
+
+    @Autowired 
+    private MediaClient mediaClient;
+
+    @Autowired 
+    private NotificationClient notificationClient;
 
     // Crear perfil
     public UserProfile crearPerfil(UserProfile perfil) {
@@ -42,6 +49,10 @@ public class UserProfileService {
 
         if (userProfileRepository.existsByTelefono(perfil.getTelefono())) {
             throw new RuntimeException("El teléfono ya se encuentra registrado");
+        }
+
+        if (perfil.getFotoPerfil() != null && !mediaClient.avatarExiste(perfil.getFotoPerfil())) {
+            throw new RuntimeException("La URL de la foto de perfil no es válida en MediaService");
         }
 
         return userProfileRepository.save(perfil);
@@ -85,6 +96,9 @@ public class UserProfileService {
         }
 
         if (nuevosDatos.getFotoPerfil() != null) {
+            if (!mediaClient.avatarExiste(nuevosDatos.getFotoPerfil())) {
+                throw new RuntimeException("La nueva URL del avatar no es válida en MediaService");
+            }
             userProfile.setFotoPerfil(nuevosDatos.getFotoPerfil());
         }
 
@@ -92,9 +106,6 @@ public class UserProfileService {
             userProfile.setBiografia(nuevosDatos.getBiografia());
         }
 
-        if (nuevosDatos.getGenero() != null) {
-            userProfile.setGenero(nuevosDatos.getGenero());
-        }
 
         if (nuevosDatos.getFechaNacimiento() != null) {
             userProfile.setFechaNacimiento(nuevosDatos.getFechaNacimiento());
@@ -108,7 +119,15 @@ public class UserProfileService {
             userProfile.setNotificaciones(nuevosDatos.getNotificaciones());
         }
 
-        return userProfileRepository.save(userProfile);
+        UserProfile actualizado = userProfileRepository.save(userProfile);
+
+        notificationClient.enviarNotificacionPerfil(
+            actualizado.getUserId(),
+            "Perfil actualizado",
+            "Tu perfil ha sido actualizado exitosamente."
+        );
+
+        return actualizado;
     }
 
     // Eliminar perfil
@@ -138,8 +157,4 @@ public class UserProfileService {
         return userProfileRepository.findByApellidoContainingIgnoreCase(apellido);
     }
 
-    // Buscar perfiles por género
-    public List<UserProfile> buscarPorGenero(Genero genero) {
-        return userProfileRepository.findByGenero(genero);
-    }
 }

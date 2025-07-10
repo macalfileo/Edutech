@@ -50,7 +50,7 @@ public class NotificationService {
         Notification noti = new Notification();
         noti.setTitulo(titulo);
         noti.setMensaje(mensaje);
-        noti.setUsuarioId(usuarioId);
+        noti.setUserId(usuarioId);;
         noti.setTipo(tipo);
 
         return notificationRepository.save(noti);

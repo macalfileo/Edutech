@@ -5,8 +5,6 @@ import java.time.LocalDate;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -16,11 +14,16 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Table(name = "perfiles_usuario")
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
+
 @Schema(description = "Perfil de usuario con datos personales, contacto y preferencias")
 public class UserProfile {
     @Id
@@ -28,6 +31,7 @@ public class UserProfile {
     @Schema(description = "ID del perfil", example = "1")
     private Long id;
 
+    @NotNull(message = "El ID del usuario es obligatorio")
     @Schema(description = "ID del usuario asociado", example = "1")
     private Long userId;
 
@@ -57,11 +61,6 @@ public class UserProfile {
     @Pattern(regexp = "\\+?\\d{9,12}", message = "El número de teléfono debe contener entre 9 y 12 dígitos")
     @Schema(description = "Número de teléfono del usuario", example = "+56987654321")
     private String telefono; // Número de teléfono del usuario, debe ser único y tener entre 9 y 12 dígitos
-
-    @Enumerated(EnumType.STRING) // Enum para el género, se almacena como cadena
-    @NotNull(message = "El género no puede estar vacío")
-    @Schema(description = "Género del usuario", example = "FEMENINO")
-    private Genero genero;
 
     @Past(message = "La fecha de nacimiento debe ser una fecha pasada") // Validación para que la fecha de nacimiento sea en el pasado
     @NotNull(message = "La fecha de nacimiento no puede estar vacía")

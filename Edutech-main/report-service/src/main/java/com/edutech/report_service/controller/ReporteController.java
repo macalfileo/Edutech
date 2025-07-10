@@ -1,7 +1,7 @@
 package com.edutech.report_service.controller;
 
 import com.edutech.report_service.dto.ReporteDTO;
-import com.edutech.report_service.service.ReporteService;
+import com.edutech.report_service.service.ReportService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -20,7 +20,7 @@ import java.util.List;
 public class ReporteController {
 
     @Autowired
-    private ReporteService service;
+    private ReportService service;
 
     @Operation(summary = "Crear un nuevo reporte", description = "Genera un reporte en base a los datos proporcionados.")
     @ApiResponse(
