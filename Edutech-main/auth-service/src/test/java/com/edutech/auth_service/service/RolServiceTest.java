@@ -23,7 +23,7 @@ public class RolServiceTest {
     @InjectMocks
     private RolService service;
 
-    @Test
+    @Test // Prueba: Crear rol exitoso
     void crear_CrearRol() {
         Rol rol = new Rol();
         rol.setNombre("Profesor");
