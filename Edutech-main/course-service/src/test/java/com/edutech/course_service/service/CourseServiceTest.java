@@ -15,6 +15,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.edutech.course_service.model.Course;
 import com.edutech.course_service.repository.CourseRepository;
 import com.edutech.course_service.webclient.AuthClient;
+import com.edutech.course_service.webclient.EnrollmentClient;
+import com.edutech.course_service.webclient.EvaluationClient;
 
 @ExtendWith(MockitoExtension.class)
 public class CourseServiceTest {
@@ -24,6 +26,12 @@ public class CourseServiceTest {
 
     @Mock
     private AuthClient authClient;
+
+    @Mock
+    private EnrollmentClient enrollmentClient;
+
+    @Mock
+    private EvaluationClient evaluationClient;
 
     @InjectMocks
     private CourseService courseService;
@@ -115,10 +123,13 @@ public class CourseServiceTest {
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(curso));
         when(authClient.usuarioPuedeModificarCurso(token, 3L)).thenReturn(true);
 
+        doNothing().when(evaluationClient).eliminarEvaluacionesDeCurso(courseId);
+
         String mensaje = courseService.eliminarCourse(token, courseId);
 
         assertEquals("Curso eliminado", mensaje);
         verify(courseRepository).delete(curso);
+        verify(evaluationClient).eliminarEvaluacionesDeCurso(courseId);
     }
 
     @Test
